@@ -36,3 +36,14 @@ php artisan test
 ```
 
 Lihat [skenario pengujian](docs/04-skenario-pengujian.md) untuk cakupan otomatis dan pemeriksaan manual. Hasil UAT perlu diisi berdasarkan uji coba pengguna yang benar-benar dilakukan.
+
+## Anggota kelompok
+
+-Ibrahim Mufid
+-Afdallil Zhikri
+-Frendika Dwiyuda Prastya
+-Said Kevin Valentsyah
+-Muhammad Haikal
+-Fadhil Rahman Falah
+-Eris Saputra
+-
