@@ -56,6 +56,9 @@ Gunakan database `siap` yang masih kosong. Jalankan:
 
 ```bash
 php artisan migrate --seed
+```
+dan
+```bash
 php artisan db:seed --class=DemoDataSeeder
 ```
 
