@@ -46,6 +46,7 @@ Ganti `DB_USERNAME` dan `DB_PASSWORD` bila akun MySQL Anda berbeda. Buat databas
 ```bash
 php artisan key:generate
 ```
+buat data base bernama `siap`
 
 ## 3. Pilih cara menyiapkan data
 
