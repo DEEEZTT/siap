@@ -1,0 +1,1 @@
+document.addEventListener('click',event=>{const target=event.target.closest('[data-confirm]');if(target&&!window.confirm(target.dataset.confirm))event.preventDefault()});document.addEventListener('submit',event=>{const form=event.target.closest('[data-confirm]');if(form&&!window.confirm(form.dataset.confirm))event.preventDefault()});
