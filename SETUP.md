@@ -16,6 +16,12 @@ Buka terminal di folder proyek `siap`, lalu pasang dependensi:
 composer install
 ```
 
+Jika diminta php 8.4 jalankan:
+
+```bash
+composer update
+```
+
 ## 2. Atur koneksi aplikasi
 
 Salin `.env.example` menjadi `.env`.
