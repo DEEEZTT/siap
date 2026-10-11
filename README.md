@@ -39,11 +39,13 @@ Lihat [skenario pengujian](docs/04-skenario-pengujian.md) untuk cakupan otomatis
 
 ## Anggota kelompok
 
--Ibrahim Mufid
--Afdallil Zhikri
--Frendika Dwiyuda Prastya
--Said Kevin Valentsyah
--Muhammad Haikal
--Fadhil Rahman Falah
--Eris Saputra
--
+|nama|
+|---|
+|Ibrahim Mufid|
+|Afdallil Zhikri|
+|Frendika Dwiyuda Prastya|
+|Said Kevin Valentsyah|
+|Muhammad Haikal|
+|Fadhil Rahman Falah|
+|Eris Saputra|
+
