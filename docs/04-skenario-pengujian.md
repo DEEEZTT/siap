@@ -12,12 +12,12 @@ Pengujian otomatis memakai database SQLite sementara. Kolom **Hasil UAT** hanya 
 
 | No. | Skenario | Cakupan otomatis | Hasil UAT |
 |---|---|---|---|
-| 1 | Pembuatan akun Kepala TU pertama dan login | Sebagian. Tes setup saat ini gagal karena tidak mengirim `username`; pembatasan percobaan login belum diuji otomatis. | |
+| 1 | Pembuatan akun Kepala TU pertama dan login | Pembuatan akun awal, username, sesi autentikasi, role Kepala TU, dan akses dashboard diuji; pembatasan percobaan login belum diuji otomatis. | |
 | 2 | TU mencatat surat masuk dengan dan tanpa lampiran | Nomor agenda dan penyimpanan lampiran diuji. | |
-| 3 | Kepala Sekolah mengisi disposisi, lalu TU mengonfirmasi tindak lanjut | Tes yang ada mengharapkan status langsung selesai setelah disposisi; alur aplikasi sekarang masih menunggu konfirmasi TU. Tes perlu diselaraskan. | |
+| 3 | Kepala Sekolah mengisi disposisi, lalu TU mengonfirmasi tindak lanjut | Status menunggu konfirmasi, konfirmasi oleh TU, status selesai, dan identitas pencatat/konfirmasi diuji. | |
 | 4 | Surat rahasia diakses TU lain | Akses daftar, detail, dan lampiran tanpa izin diuji. | |
-| 5 | Surat keluar melalui verifikasi, persetujuan, dan cetak | Ada tes alur, tetapi saat ini gagal pada pemeriksaan teks pilihan jenis surat sehingga langkah berikutnya belum tervalidasi oleh tes tersebut. | |
-| 6 | Sertifikat PKL sebelum PKL berakhir | Penolakan penerbitan sebelum waktunya diuji. Tes tampilan sertifikat juga perlu menyamakan huruf besar/kecil pada predikat. | |
+| 5 | Surat keluar melalui verifikasi, persetujuan, dan cetak | Pemilihan jenis surat, pembuatan surat undangan, verifikasi Kepala TU, nomor agenda/surat, persetujuan Kepala Sekolah, dan cetak diuji. | |
+| 6 | Penerbitan sertifikat PKL dan batas masa PKL | Penerbitan setelah PKL berakhir, nomor sertifikat, identitas penerima/mitra/predikat pada tampilan, dan penolakan sebelum PKL berakhir diuji. | |
 | 7 | Penerbitan sertifikat kegiatan untuk beberapa penerima | Nomor berurutan, halaman detail, cetak semua, dan pembatasan role diuji. | |
 | 8 | MoU/PKS tanpa nomor, ruang lingkup, atau tanggal | Validasi wajib diuji. | |
 | 9 | Tanggal akhir MoU/PKS lebih awal dari tanggal mulai | Validasi tanggal diuji. | |
@@ -29,7 +29,7 @@ Pengujian otomatis memakai database SQLite sementara. Kolom **Hasil UAT** hanya 
 
 ## Hasil eksekusi terakhir
 
-Pada pemeriksaan terakhir, `php artisan test` menjalankan **27 tes: 23 lulus dan 4 gagal**. Kegagalan yang tercatat berkaitan dengan input `username` pada tes setup, ekspektasi status disposisi, teks pilihan surat keluar, dan huruf besar/kecil predikat sertifikat PKL. Tinjau atau perbarui tes tersebut, lalu jalankan ulang sebelum menyatakan seluruh tes lulus.
+Jalankan ulang `php artisan test` setelah perubahan aplikasi atau skenario tes. Catat jumlah tes lulus/gagal dan tindak lanjutnya di sini. Tes otomatis memeriksa perilaku kode; tes lulus tidak menggantikan UAT dan bukti kesesuaian dengan job sheet.
 
 ## Catatan UAT
 

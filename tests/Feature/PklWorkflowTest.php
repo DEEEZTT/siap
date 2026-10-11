@@ -21,7 +21,7 @@ class PklWorkflowTest extends TestCase
         $student->refresh();
         $this->assertSame('PKL/'.now()->year.'/3684', $student->certificate_number);
         $this->assertNotNull($student->completed_at);
-        $this->actingAs($humas)->get(route('certificates.show', $student))->assertOk()->assertSee('Syarifah Nazura')->assertSee('Mitra Tanjungpinang')->assertSee('Sangat Baik');
+        $this->actingAs($humas)->get(route('certificates.show', $student))->assertOk()->assertSee('Syarifah Nazura')->assertSee('Mitra Tanjungpinang')->assertSee('SANGAT BAIK');
     }
 
     public function test_humas_cannot_issue_certificate_before_the_internship_ends(): void

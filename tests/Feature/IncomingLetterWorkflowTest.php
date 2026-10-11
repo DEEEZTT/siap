@@ -36,9 +36,11 @@ class IncomingLetterWorkflowTest extends TestCase
         $tu = User::factory()->create(['role' => 'tu']);
         $kepsek = User::factory()->create(['role' => 'kepsek']);
         $letter = IncomingLetter::query()->create(['agenda_number' => 'IM/2026/0001', 'letter_number' => 'B/12/2026', 'letter_date' => '2026-09-28', 'received_at' => '2026-09-29', 'sender' => 'Dinas Pendidikan', 'subject' => 'Undangan rapat', 'classification' => 'biasa', 'file_path' => 'letters/incoming/sample.pdf', 'status' => 'menunggu_disposisi', 'created_by' => $tu->id]);
-        $this->actingAs($kepsek)->post(route('incoming.disposition', $letter), ['recipients' => ['Waka Humas'], 'instructions' => ['Koordinasi/konfirmasi'], 'note' => 'Tindak lanjuti'])->assertRedirect();
+        $this->actingAs($kepsek)->post(route('incoming.disposition', $letter), ['recipients' => ['Waka Humas'], 'instruction' => 'Koordinasi/konfirmasi', 'note' => 'Tindak lanjuti'])->assertRedirect();
+        $this->assertSame('menunggu_konfirmasi_tu', $letter->fresh()->status);
+        $this->actingAs($tu)->post(route('incoming.follow_up.confirm', $letter), ['confirmation_note' => 'Tindak lanjut sudah dikonfirmasi'])->assertRedirect();
         $this->assertSame('selesai', $letter->fresh()->status);
-        $this->assertDatabaseHas('dispositions', ['incoming_letter_id' => $letter->id, 'completed_by' => $kepsek->id, 'note' => 'Tindak lanjuti']);
+        $this->assertDatabaseHas('dispositions', ['incoming_letter_id' => $letter->id, 'completed_by' => $kepsek->id, 'confirmed_by' => $tu->id, 'confirmation_note' => 'Tindak lanjut sudah dikonfirmasi', 'note' => 'Tindak lanjuti']);
         $this->actingAs($kepsek)->get(route('incoming.disposition.print', $letter))->assertOk()->assertSee('LEMBAR DISPOSISI')->assertSee('Tindak lanjuti');
     }
 }
