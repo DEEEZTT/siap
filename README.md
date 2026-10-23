@@ -1,6 +1,6 @@
 # SIAP — Sistem Manajemen Sekolah
 
-Aplikasi web untuk membantu administrasi SMK Negeri 4 Tanjungpinang. Proyek ini dibuat oleh XII RPL 3 dalam pembelajaran Teaching Factory.
+Aplikasi web untuk membantu administrasi SMK Negeri 4 Tanjungpinang. Proyek ini dibuat oleh XII RPL 2 dalam pembelajaran Teaching Factory.
 
 ## Fitur
 
