@@ -48,4 +48,3 @@ Lihat [skenario pengujian](docs/04-skenario-pengujian.md) untuk cakupan otomatis
 |Muhammad Haikal|
 |Fadhil Rahman Falah|
 |Eris Saputra|
-
