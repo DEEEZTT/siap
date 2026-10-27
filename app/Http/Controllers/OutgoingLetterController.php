@@ -14,6 +14,8 @@ use Illuminate\View\View;
 
 class OutgoingLetterController extends Controller
 {
+    private const SORTABLE_COLUMNS = ['agenda_number', 'type', 'letter_date', 'recipient_name', 'subject', 'created_by', 'status'];
+
     private const TYPES = [
         'undangan' => ['label' => 'Surat undangan', 'description' => 'Mengundang penerima ke kegiatan sekolah.', 'subject' => 'Undangan'],
         'perintah_tugas' => ['label' => 'Surat perintah tugas', 'description' => 'Menugaskan pegawai untuk melaksanakan tugas sekolah.', 'subject' => 'Perintah Tugas'],
@@ -28,6 +30,8 @@ class OutgoingLetterController extends Controller
             'status' => ['nullable', 'in:draft,menunggu_verifikasi,perlu_revisi,menunggu_persetujuan_kepsek,perlu_revisi_kepsek,siap_dicetak,selesai'],
             'year' => ['nullable', 'integer', 'between:1900,2100'],
             'month' => ['nullable', 'integer', 'between:1,12'],
+            'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
+            'direction' => ['nullable', 'in:asc,desc'],
         ]);
         $firstLetterDate = OutgoingLetter::query()->whereNotNull('letter_date')->min('letter_date');
         $latestLetterDate = OutgoingLetter::query()->whereNotNull('letter_date')->max('letter_date');
@@ -58,7 +62,16 @@ class OutgoingLetterController extends Controller
                 ->orWhere('subject', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('agenda_number', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('letter_number', 'like', '%'.$request->string('q')->toString().'%')))
-            ->latest()
+            ->when($request->filled('sort'), function ($query) use ($request): void {
+                $sort = $request->string('sort')->toString();
+                $direction = $request->input('direction', 'asc');
+                if ($sort === 'created_by') {
+                    $query->orderBy(\App\Models\User::query()->select('name')->whereColumn('users.id', 'outgoing_letters.created_by')->limit(1), $direction);
+                } else {
+                    $query->orderBy($sort, $direction);
+                }
+                $query->orderByDesc('id');
+            }, fn ($query) => $query->latest())
             ->paginate(12)
             ->withQueryString();
 

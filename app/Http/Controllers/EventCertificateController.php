@@ -7,16 +7,19 @@ use App\Models\Certificate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class EventCertificateController extends Controller
 {
+    private const SORTABLE_COLUMNS = ['certificate_number', 'recipient_name', 'title', 'category', 'issued_at'];
+
     public function index(Request $request): View
     {
         $request->validate([
             'q' => ['nullable', 'string', 'max:190'],
             'category' => ['nullable', 'in:'.implode(',', array_keys(Certificate::CATEGORIES))],
+            'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
+            'direction' => ['nullable', 'in:asc,desc'],
         ]);
 
         $certificates = Certificate::query()
@@ -25,7 +28,9 @@ class EventCertificateController extends Controller
                 ->where('recipient_name', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('certificate_number', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('title', 'like', '%'.$request->string('q')->toString().'%')))
-            ->latest('issued_at')->latest('id')
+            ->when($request->filled('sort'), fn ($query) => $query
+                ->orderBy($request->string('sort')->toString(), $request->input('direction', 'asc'))
+                ->orderByDesc('id'), fn ($query) => $query->latest('issued_at')->latest('id'))
             ->paginate(15)->withQueryString();
 
         return view('event-certificates.index', compact('certificates'));
@@ -38,32 +43,23 @@ class EventCertificateController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate(['recipients' => ['required', 'string', 'max:20000']] + $this->rules());
-        $recipients = collect(preg_split('/\R/', $data['recipients']))->map(fn ($line) => trim((string) $line))->filter()->unique()->values();
-        unset($data['recipients']);
-        abort_if($recipients->isEmpty(), 422, 'Isi minimal satu nama penerima.');
-        abort_if($recipients->count() > 200, 422, 'Maksimal 200 penerima sekali terbit.');
+        $data = $request->validate($this->rules());
 
         $year = (int) substr($data['issued_at'], 0, 4);
 
-        $created = DB::transaction(function () use ($recipients, $data, $year, $request): Collection {
-            return $recipients->map(function (string $line) use ($data, $year, $request): Certificate {
-                [$name, $detail] = array_pad(array_map('trim', explode('|', $line, 2)), 2, null);
-                $number = $this->nextNumber($year);
+        $certificate = DB::transaction(function () use ($data, $year, $request): Certificate {
+            $number = $this->nextNumber($year);
 
-                return Certificate::query()->create([
-                    ...$data,
-                    'recipient_name' => $name,
-                    'recipient_detail' => $detail ?: null,
-                    'certificate_number' => 'SRT/'.$year.'/'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
-                    'created_by' => $request->user()->id,
-                ]);
-            });
+            return Certificate::query()->create([
+                ...$data,
+                'certificate_number' => 'SRT/'.$year.'/'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+                'created_by' => $request->user()->id,
+            ]);
         }, attempts: 5);
 
-        ActivityLog::record('sertifikat_kegiatan_terbit', 'Menerbitkan '.$created->count().' sertifikat "'.$data['title'].'".', $created->first());
+        ActivityLog::record('sertifikat_kegiatan_terbit', 'Menerbitkan sertifikat "'.$data['title'].'" untuk '.$certificate->recipient_name.'.', $certificate);
 
-        return redirect()->route('event-certificates.index')->with('success', $created->count().' sertifikat berhasil diterbitkan.');
+        return redirect()->route('event-certificates.index')->with('success', 'Sertifikat untuk '.$certificate->recipient_name.' berhasil diterbitkan.');
     }
 
     public function show(Certificate $certificate): View
@@ -97,6 +93,7 @@ class EventCertificateController extends Controller
     private function rules(): array
     {
         return [
+            'recipient_name' => ['required', 'string', 'max:190'],
             'category' => ['required', 'in:'.implode(',', array_keys(Certificate::CATEGORIES))],
             'title' => ['required', 'string', 'max:190'],
             'description' => ['required', 'string', 'max:1000'],

@@ -21,17 +21,30 @@ use Throwable;
 
 class StudentController extends Controller
 {
+    private const SORTABLE_COLUMNS = ['name', 'nis', 'company', 'internship_start', 'predicate', 'completed_at'];
+
     public function index(Request $request): View
     {
         $request->validate([
             'q' => ['nullable', 'string', 'max:190'],
             'academic_year' => ['nullable', 'regex:/^\d{4}\/\d{4}$/'],
             'status' => ['nullable', 'in:berjalan,selesai'],
+            'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
+            'direction' => ['nullable', 'in:asc,desc'],
         ]);
         $academicYears = $this->academicYears();
         $selectedAcademicYear = $request->input('academic_year', $this->currentAcademicYear());
         $students = $this->filteredStudents($request, $selectedAcademicYear)
-            ->latest('created_at')
+            ->when($request->filled('sort'), function (Builder $query) use ($request): void {
+                $sort = $request->string('sort')->toString();
+                $direction = $request->input('direction', 'asc');
+                if ($sort === 'company') {
+                    $query->orderBy(Company::query()->select('name')->whereColumn('companies.id', 'students.company_id')->limit(1), $direction);
+                } else {
+                    $query->orderBy($sort, $direction);
+                }
+                $query->orderByDesc('id');
+            }, fn (Builder $query) => $query->latest('created_at'))
             ->paginate(15)
             ->withQueryString();
         $totalStudentCount = Student::query()->count();

@@ -9,6 +9,7 @@
 </div>
 <div class="toolbar">
     <form class="filter-panel" method="get">
+        @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari surat keluar</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari penerima, nomor surat, atau perihal"></label>
             <button class="button" type="submit"><span aria-hidden="true">⌕</span> Cari data</button>
@@ -38,7 +39,7 @@
 <div class="table-card">
     <div class="table-scroll">
         <table>
-            <thead><tr><th>No. agenda</th><th>Jenis</th><th>Tanggal</th><th>Tujuan</th><th>Perihal</th><th>Pembuat</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><x-sortable-th column="agenda_number" label="No. agenda" /><x-sortable-th column="type" label="Jenis" /><x-sortable-th column="letter_date" label="Tanggal" /><x-sortable-th column="recipient_name" label="Tujuan" /><x-sortable-th column="subject" label="Perihal" /><x-sortable-th column="created_by" label="Pembuat" /><x-sortable-th column="status" label="Status" /><th></th></tr></thead>
             <tbody>
                 @forelse($letters as $letter)
                     <tr>

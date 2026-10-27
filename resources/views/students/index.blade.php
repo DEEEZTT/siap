@@ -28,6 +28,7 @@
 </div>
 <div class="toolbar">
     <form class="filter-panel" method="get">
+        @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari data siswa PKL</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nama, NIS, jurusan, atau perusahaan"></label>
             <button class="button" type="submit"><span aria-hidden="true">⌕</span> Cari data</button>
@@ -42,7 +43,7 @@
         </details>
     </form>
 </div>
-<div class="table-card"><div class="table-scroll"><table><thead><tr><th>No.</th><th>Nama siswa</th><th>NIS / jurusan</th><th>Perusahaan</th><th>Masa PKL</th><th>Predikat</th><th>Status</th><th>Aksi</th></tr></thead><tbody>
+<div class="table-card"><div class="table-scroll"><table><thead><tr><th>No.</th><x-sortable-th column="name" label="Nama siswa" /><x-sortable-th column="nis" label="NIS / jurusan" /><x-sortable-th column="company" label="Perusahaan" /><x-sortable-th column="internship_start" label="Masa PKL" /><x-sortable-th column="predicate" label="Predikat" /><x-sortable-th column="completed_at" label="Status" /><th>Aksi</th></tr></thead><tbody>
 @forelse($students as $student)
 <tr>
     <td>{{ $students->firstItem() + $loop->index }}</td>

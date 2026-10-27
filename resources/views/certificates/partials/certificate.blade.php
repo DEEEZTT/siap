@@ -30,7 +30,7 @@
 
                 <div class="certificate-signatures" aria-label="Kolom tanda tangan dibiarkan kosong">
                     <section class="certificate-signature">
-                        <p>KEPALA</p>
+                        <p>KEPALA SEKOLAH</p>
                         <p>SMK NEGERI 4 TANJUNGPINANG</p>
                         <div class="signature-space" aria-hidden="true"></div>
                         <strong>Yayuk Sri Mulyani Rahayu, S.Pd., M.M.</strong>

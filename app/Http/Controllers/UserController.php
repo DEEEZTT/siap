@@ -10,9 +10,22 @@ use Illuminate\View\View;
 
 class UserController extends Controller
 {
-    public function index(): View
+    private const SORTABLE_COLUMNS = ['name', 'username', 'email', 'role', 'position', 'created_at'];
+
+    public function index(Request $request): View
     {
-        return view('users.index', ['users' => User::query()->orderBy('role')->orderBy('name')->paginate(20)]);
+        $request->validate([
+            'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
+            'direction' => ['nullable', 'in:asc,desc'],
+        ]);
+
+        $users = User::query()
+            ->when($request->filled('sort'), fn ($query) => $query
+                ->orderBy($request->string('sort')->toString(), $request->input('direction', 'asc'))
+                ->orderByDesc('id'), fn ($query) => $query->orderBy('role')->orderBy('name'))
+            ->paginate(20)->withQueryString();
+
+        return view('users.index', compact('users'));
     }
 
     public function create(): View

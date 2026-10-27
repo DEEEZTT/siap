@@ -12,6 +12,7 @@
 </div>
 <div class="toolbar">
     <form class="filter-panel" method="get">
+        @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari mitra perusahaan</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nama, kontak, telepon, atau email perusahaan"></label>
             <button class="button" type="submit"><span aria-hidden="true">⌕</span> Cari data</button>
@@ -27,7 +28,7 @@
         </details>
     </form>
 </div>
-<div class="table-card"><div class="table-scroll"><table><thead><tr><th>Perusahaan</th><th>Jenis kemitraan</th><th>Dokumen MoU/PKS</th><th>Masa berlaku</th><th>Kontak</th><th>Telepon / email</th><th>Siswa PKL</th><th>Status kerja sama</th><th></th></tr></thead><tbody>
+<div class="table-card"><div class="table-scroll"><table><thead><tr><x-sortable-th column="name" label="Perusahaan" /><x-sortable-th column="partnership_type" label="Jenis kemitraan" /><x-sortable-th column="document_number" label="Dokumen MoU/PKS" /><x-sortable-th column="valid_until" label="Masa berlaku" /><x-sortable-th column="contact_person" label="Kontak" /><x-sortable-th column="phone" label="Telepon / email" /><x-sortable-th column="students_count" label="Siswa PKL" /><x-sortable-th column="status" label="Status kerja sama" /><th></th></tr></thead><tbody>
 @forelse($companies as $company)
 <tr>
     <td><strong>{{ $company->name }}</strong><small>{{ $company->address }}</small>@if($company->mou_document_path)<small><a class="text-link" href="{{ route('companies.mou.download', $company) }}">Unduh PDF MOU</a></small>@endif</td>

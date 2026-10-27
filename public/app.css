@@ -14,7 +14,7 @@
 .certificate-logos{position:absolute;inset:4.5% 6% auto;width:auto;display:flex;justify-content:space-between;align-items:center}
 .certificate-logos img{width:16cqw;height:16cqw;max-width:none;max-height:none;object-fit:contain}
 .certificate-title{position:absolute;top:5.5%;left:25%;width:50%;margin:0;color:#20242a;font:700 9cqw/1 Georgia,'Times New Roman',serif}
-.event-certificate-title{top:7%;left:10%;width:80%;max-height:11%;overflow:hidden;font-size:4.2cqw;line-height:1.08;text-wrap:balance}
+.event-certificate-title{top:7%;left:21%;width:58%;max-height:11%;overflow:hidden;overflow-wrap:anywhere;font-size:4.2cqw;line-height:1.08;text-wrap:balance}
 .certificate .cert-number{position:absolute;top:20.5%;left:22%;width:56%;margin:0;color:#30343a;font:1.8cqw/1.2 Georgia,'Times New Roman',serif}
 .certificate .cert-label{position:absolute;top:26.5%;left:0;width:100%;margin:0;font:1.9cqw/1.3 Georgia,'Times New Roman',serif}
 .certificate .student-name{position:absolute;top:34.5%;left:8%;width:84%;margin:0;color:#30343a;font:italic 3.3cqw/1.2 Georgia,'Times New Roman',serif;letter-spacing:.025em}
@@ -26,10 +26,11 @@
 .certificate .cert-description strong{font-weight:700;text-transform:uppercase}
 .certificate-signatures{position:absolute;top:68%;left:8%;display:grid;grid-template-columns:1fr 1fr;gap:12%;width:84%;height:28%;margin:0;padding:0;font:1.2cqw/1.3 Arial,sans-serif}
 .certificate-signature{position:relative;min-width:0;text-align:center}
+.certificate-signature{width:max-content;max-width:100%;margin:0 auto;text-align:left}
 .certificate-signature p{margin:0;white-space:nowrap}
 .certificate-signature p:nth-child(2){font-size:1.25cqw;white-space:normal}
 .certificate-signature .signature-space{height:8.5cqw}
-.certificate-signature strong{display:block;margin:0 auto;text-decoration:underline;white-space:nowrap;font-size:1.35cqw}
+.certificate-signature strong{display:block;margin:0;text-decoration:underline;white-space:nowrap;font-size:1.35cqw}
 .certificate-signature span{display:block;white-space:nowrap;font-size:1.25cqw}
 .certificate-watermark{position:absolute;top:23%;left:30%;width:40cqw;height:40cqw;object-fit:contain;opacity:.82;filter:saturate(1.2) contrast(1.08);pointer-events:none}
 .certificate-slogan{position:absolute;top:78%;left:42%;width:16cqw;height:12.4cqw;object-fit:contain;pointer-events:none}
@@ -38,7 +39,7 @@
 .certificate-editor-grid{display:grid;grid-template-columns:1.1fr 1fr .8fr;gap:14px}
 .certificate-editor .form-actions{margin-top:14px;padding-top:14px}
 @media(max-width:760px){.certificate-editor-grid{grid-template-columns:1fr}.certificate-editor .form-actions{margin-top:12px}}
-@media print{.certificate-preview{padding:0;overflow:visible}.certificate{width:297mm;height:207.7mm;aspect-ratio:auto;box-shadow:none}.certificate-logos img{width:47.52mm;height:47.52mm}.certificate-title{font-size:26.73mm}.event-certificate-title{top:7%;left:10%;width:80%;max-height:11%;font-size:12.5mm;line-height:1.08}.certificate .cert-number{font-size:5.35mm}.certificate .cert-label{font-size:5.64mm}.certificate .student-name{font-size:9.8mm}.certificate .student-facts{font-size:4.46mm;gap:1.63mm 2.97mm}.certificate .cert-description{font-size:4.31mm}.certificate-watermark{top:23%;left:30%;width:118.8mm;height:118.8mm}.certificate-slogan{top:78%;left:42%;width:47.52mm;height:36.83mm}.certificate-signatures{font-size:3.56mm}.certificate-signature p:nth-child(2){font-size:3.71mm}.certificate-signature strong{font-size:4mm}.certificate-signature span{font-size:3.71mm}}
+@media print{.certificate-preview{padding:0;overflow:visible}.certificate{width:297mm;height:207.7mm;aspect-ratio:auto;box-shadow:none}.certificate-logos img{width:47.52mm;height:47.52mm}.certificate-title{font-size:26.73mm}.event-certificate-title{top:7%;left:21%;width:58%;max-height:11%;font-size:12.5mm;line-height:1.08}.certificate .cert-number{font-size:5.35mm}.certificate .cert-label{font-size:5.64mm}.certificate .student-name{font-size:9.8mm}.certificate .student-facts{font-size:4.46mm;gap:1.63mm 2.97mm}.certificate .cert-description{font-size:4.31mm}.certificate-watermark{top:23%;left:30%;width:118.8mm;height:118.8mm}.certificate-slogan{top:78%;left:42%;width:47.52mm;height:36.83mm}.certificate-signatures{font-size:3.56mm}.certificate-signature p:nth-child(2){font-size:3.71mm}.certificate-signature strong{font-size:4mm}.certificate-signature span{font-size:3.71mm}}
 @page certificateSheet{size:297mm 207.7mm;margin:0}
 .certificate-preview{page:certificateSheet}
 @media(max-width:720px){.disposition-columns{min-height:0}.disposition-columns section{padding:8px;font-size:9px}.disposition-meta td{padding:5px 3px;font-size:8px}.disposition-note{min-height:35mm}}@media print{.disposition-paper{height:297mm}.disposition-columns,.disposition-note{break-inside:avoid}}
@@ -87,7 +88,7 @@
 .disposition-footer>section:last-child{border:0}
 .disposition-footer>section>b{font-weight:400}
 .disposition-footer p{margin:1mm 0;white-space:pre-wrap}
-.disposition-signature{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;line-height:1.35}
+.disposition-signature{display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;line-height:1.35}
 .disposition-signature strong{margin-top:4mm;font-weight:400;white-space:nowrap}
 .disposition-signature small{font-size:9px}
 @media print{
@@ -146,7 +147,7 @@
 .invitation-closing{margin-left:14mm}
 .event-info{margin:6mm 0 3mm 12mm;font:11pt/1.45 Arial,sans-serif}
 .event-info td{padding:1mm 2mm 1mm 0;font:inherit}
-.signature{width:70mm;margin:8mm 12mm 0 auto;font:10pt/1.4 Arial,sans-serif}
+.signature{width:70mm;margin:8mm 12mm 0 auto;text-align:left;font:10pt/1.4 Arial,sans-serif}
 .signature b{margin-top:15mm}
 @media(max-width:720px){.letter-paper{width:calc(100% - 20px);margin:10px auto;padding:8mm 9mm}.letter-meta{font-size:9pt}.letter-address,.letter-subject,.letter-body,.event-info{font-size:9pt}.signature{margin-right:5mm}}
 @media print{.letter-paper{page:auto;width:210mm;height:auto;min-height:0;max-width:none;aspect-ratio:auto;margin:0;padding:10mm 25mm;break-after:auto;box-shadow:none;background:#fff}.letter-head{padding-bottom:8px}.letter-meta{margin:5mm 0 6mm;font-size:11pt}.letter-address,.letter-subject,.letter-body,.event-info{font-size:11pt}.letter-subject{margin:5mm 0 2mm}.letter-document-title{margin:5mm 0 3mm}.letter-document-subtitle{margin:4mm 0}.letter-basis,.letter-closing{margin:4mm 0;line-height:1.5}.letter-details{row-gap:2px;margin:4mm 0;line-height:1.4}.invitation-body .event-info{margin-top:4mm;margin-bottom:2mm}.event-info{margin-top:4mm;margin-bottom:2mm}.letter-body{margin:2mm 0;line-height:1.4}.signature{margin:5mm 12mm 0 auto}.signature b{margin-top:10mm}.mutation-documents{margin-bottom:2mm;line-height:1.3}}
@@ -285,3 +286,128 @@ form:has(> button.table-action){display:inline-flex}
 @media(max-width:760px){.report-filter-card{align-items:stretch;flex-direction:column;gap:13px;padding:14px}.report-filter-form{display:grid;grid-template-columns:1fr 1fr;align-items:end}.report-filter-form .button{grid-column:1/-1}.report-filter-form .filter-field{min-width:0}.report-insights-grid{grid-template-columns:1fr}.report-panel{padding:15px}.report-panel-heading{align-items:flex-start}.report-panel-heading>.button{min-height:35px;padding:8px 10px;font-size:10px}.report-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.report-summary-card{gap:9px;padding:12px}.report-summary-icon{width:35px;height:35px}.report-summary-card strong{font-size:21px}.report-summary-card small{font-size:9px}.agreement-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.report-summary-grid{grid-template-columns:1fr 1fr}.report-summary-card{align-items:flex-start;flex-direction:column}.report-panel-heading{gap:10px}.report-panel-heading h2{font-size:15px}.report-panel-heading p{max-width:210px;line-height:1.5}.report-chart-card,.report-breakdown-card,.report-attention{padding:12px}}
 @media print{.report-page-heading,.report-filter-card,.report-panel-heading .button{display:none!important}.report-summary-grid{grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 10px}.report-summary-card,.report-panel{box-shadow:none;break-inside:avoid}.report-summary-card{padding:9px}.report-summary-icon{width:30px;height:30px}.report-summary-card strong{font-size:17px}.report-panel{padding:12px;margin-bottom:10px}.report-insights-grid{grid-template-columns:1fr 1fr;gap:8px}.report-breakdown-card,.report-chart-card,.report-attention{padding:10px;background:#fff}.report-bar-chart{min-width:0;gap:4px}.report-bar-column{grid-template-rows:12px 55px 14px;font-size:8px}.report-bar-track{height:55px}.report-print-title{display:block;margin:0 0 12px;font-size:16px}.report-chart-scroll{overflow:visible}.report-attention table{min-width:0}}
+.certificate .event-certificate-name{top:34%;color:#174461;font-weight:700;letter-spacing:.08em;text-shadow:0 1px rgba(255,255,255,.75)}
+.certificate .event-certificate-name::before,.certificate .event-certificate-name::after{content:"";position:absolute;left:31%;width:38%;height:.16cqw;background:linear-gradient(90deg,transparent,#b9934e 18%,#dec982 50%,#b9934e 82%,transparent)}
+.certificate .event-certificate-name::before{top:-1.7cqw}
+.certificate .event-certificate-name::after{bottom:-1.7cqw}
+.certificate .event-certificate-description{top:43%;left:15%;width:70%;padding:1.8cqw 2.5cqw;border-top:.14cqw solid #c5a45e;border-bottom:.14cqw solid #c5a45e;background:rgba(255,255,255,.42);font-size:1.55cqw;line-height:1.5;color:#344957}
+.certificate .event-certificate-description strong{display:inline-block;margin-top:.45cqw;color:#174461;letter-spacing:.06em}
+@media print{.certificate .event-certificate-description{font-size:4.46mm}}
+/* Stronger contrast and a brighter blue accent across the school app. */
+:root{--navy:#123858;--blue:#087eae;--line:#d7e2ea;--muted:#596c7d;--shadow:0 7px 22px rgba(18,56,88,.09);color:#172b3d;background:#f1f6f9}
+body{background:#f1f6f9;color:#172b3d}
+.sidebar{background:#103553;color:#f3f8fc}
+.nav-label{color:#b1c7d8}
+.nav-link{color:#e0ebf3}
+.nav-link:hover,.nav-link.active{background:#1b5278;color:#fff}
+.nav-link.active{box-shadow:inset 4px 0 #45c2e7}
+.brand small,.user-menu small,.school-chip small{color:#c0d2df}
+.topbar,.stat-card,.panel,.form-card,.table-card,.detail-card{border-color:#d7e2ea}
+.topbar strong,.welcome-row h1,.panel-heading h2{color:#172f45}
+.eyebrow{color:#65798b}
+.eyebrow.blue,.text-link,.table-action{color:#087eae}
+.page-heading p,.muted,.stat-label,.report-bar-column,.agreement-status-card>span:first-child{color:#596c7d}
+.stat-card small,td small,.field-hint,.empty-state,.pagination{color:#607386}
+.button{background:#087eae}
+.button:hover{background:#06658e}
+.button-light{color:#29465e;border-color:#c9d8e3;background:#fff}
+.button-light:hover{background:#eaf4f8}
+.icon-blue,.activity-icon{color:#086e9b;background:#e1f3fa}
+.icon-amber{color:#8a5700;background:#fff1d4}
+.icon-green{color:#176b48;background:#e0f4e9}
+.icon-purple{color:#594a97;background:#eeebfa}
+.status{background:#e9eff3;color:#405669}
+.status-menunggu_disposisi,.status-menunggu_verifikasi{background:#fff0c9;color:#765000}
+.status-selesai,.status-disetujui{background:#def3e6;color:#185c3b}
+.status-perlu_revisi{background:#ffebe7;color:#943b30}
+.status-pill{border-color:#cddfe7;background:#eaf5f8;color:#31596b}
+.report-bar-track i{background:#087eae}
+.report-bar-track .report-bar-indigo{background:#675bb2}
+.report-bar-track .report-bar-green{background:#278653}
+.letter-head{grid-template-columns:68px minmax(0,1fr) 68px;margin-right:0;margin-left:0}
+.letter-head img{position:static;width:120px;height:120px}
+.letter-head img:first-child{transform:translateX(-24px)}
+.letter-head img:last-child{transform:translateX(-37px)}
+.letter-head strong{font-size:18px;letter-spacing:0}
+.letter-head b{font-size:20px}
+.letter-head b:nth-of-type(2){font-size:21px}
+.letter-head small{font-size:10px}
+@media(max-width:720px){.letter-head{grid-template-columns:48px minmax(0,1fr) 48px}.letter-head img{width:56px;height:56px}.letter-head img:first-child,.letter-head img:last-child{transform:none}.letter-head strong{font-size:10px}.letter-head b{font-size:11px}.letter-head b:nth-of-type(2){font-size:12px}}
+
+/* Higher-contrast accents for everyday school administration screens. */
+:root{--navy:#123858;--blue:#087eae;--line:#d3e1e9;--muted:#536a7d;--shadow:0 8px 24px rgba(19,58,88,.1)}
+body{background:linear-gradient(135deg,#f3f8fb 0%,#edf4f8 100%)}
+.sidebar{background:linear-gradient(165deg,#0f3453 0%,#124665 100%)}
+.nav-label{color:#a9c7d8}
+.nav-link{transition:background .16s ease,color .16s ease,transform .16s ease}
+.nav-link span{color:#8bd2eb}
+.nav-link:hover{background:#1c5a7e;transform:translateX(2px)}
+.nav-link.active{background:linear-gradient(90deg,#17678e,#1b5278);box-shadow:inset 4px 0 #f0bd56}
+.nav-link.active span{color:#fff1c8}
+.topbar{border-bottom:2px solid #b6dce9;box-shadow:0 4px 16px rgba(20,63,92,.06)}
+.avatar{background:#d8f1f8;color:#075c80;border:2px solid #a8dce9}
+.page-heading h1,.welcome-row h1{color:#123858}
+.eyebrow.blue,.text-link,.table-action{color:#067ba8}
+.button{background:linear-gradient(135deg,#0b83b0,#076d98);box-shadow:0 3px 8px rgba(7,109,152,.18)}
+.button:hover{background:linear-gradient(135deg,#086d95,#075878);box-shadow:0 5px 12px rgba(7,88,120,.24)}
+.button-light{box-shadow:none}
+.stat-card{border-top:3px solid #087eae;background:linear-gradient(145deg,#fff 65%,#f0f9fc 100%)}
+.stat-card:nth-child(4n+2){border-top-color:#16a085;background:linear-gradient(145deg,#fff 65%,#effaf6 100%)}
+.stat-card:nth-child(4n+3){border-top-color:#d89a29;background:linear-gradient(145deg,#fff 65%,#fff9ed 100%)}
+.stat-card:nth-child(4n+4){border-top-color:#7568b5;background:linear-gradient(145deg,#fff 65%,#f6f4fc 100%)}
+.panel-heading h2:before{content:"";display:inline-block;width:4px;height:17px;margin-right:9px;border-radius:4px;background:#0b91b9;vertical-align:-3px}
+th{background:#e4f2f7;color:#234b63;border-bottom:2px solid #a8d4e3}
+tbody tr:hover td{background:#f0f9fc}
+.input,.select,.textarea{border-color:#c9d9e3;color:#203a4e}
+.input:focus,.select:focus,.textarea:focus{border-color:#0794bd;box-shadow:0 0 0 3px rgba(7,148,189,.17)}
+.field label{color:#29475d}
+.status{font-weight:700;border:1px solid #d5e2e9}
+.status-menunggu_disposisi,.status-menunggu_verifikasi{background:#fff0c9;color:#724b00;border-color:#edcf83}
+.status-selesai,.status-disetujui{background:#dff5e8;color:#155d3b;border-color:#a9dfbd}
+.status-perlu_revisi{background:#ffebe7;color:#92372c;border-color:#f0b9af}
+.status-draft{background:#e8eef4;color:#425c70;border-color:#ccd9e3}
+.alert-success{background:#ddf5e7;color:#155b3a;border-color:#9bd9b3}
+.alert-error{background:#ffebe7;color:#96372c;border-color:#efb5a9}
+.certificate .event-certificate-name{color:#103f5d}
+.certificate .event-certificate-name::before,.certificate .event-certificate-name::after{height:.22cqw;background:linear-gradient(90deg,transparent,#987021 18%,#d6ae4b 50%,#987021 82%,transparent)}
+.certificate .event-certificate-description{border-color:#a88132;background:rgba(255,255,255,.7);color:#263e4d}
+.certificate .event-certificate-description strong{color:#123f5b}
+.button.button-light{background:#fff;color:#17415b;border-color:#b9cbd7;box-shadow:0 2px 5px rgba(19,58,88,.07)}
+.button.button-light:hover{background:#eaf4f8;color:#10354d;border-color:#8eb5c8}
+.button.button-danger{background:#fff0ed;color:#a52e25;border-color:#e5aaa2;box-shadow:none}
+.button.button-danger:hover{background:#ffe1dc;color:#84221b;border-color:#d77e72}
+.filter-panel{position:relative;overflow:hidden;border-color:#b9d4e0;background:linear-gradient(135deg,#fff 0%,#f3f9fc 100%);box-shadow:0 8px 22px rgba(19,58,88,.09)}
+.filter-panel:before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,#087eae 0%,#1ca6b8 65%,#e6b64d 100%)}
+.filter-search .input{border-color:#c5d8e3;background:#fff}
+.filter-search .input::placeholder{color:#71869a;opacity:1}
+.filter-search-icon{color:#087eae}
+.filter-details[open]{border-top-color:#cfdee6}
+.filter-details summary{color:#173f58}
+.filter-summary-icon{background:#d8f1f7;color:#076f96}
+.filter-summary-hint,.filter-field{color:#526c7e}
+.filter-field .select{border-color:#c3d7e2;color:#1e3b50;background-color:#fff}
+.table-card{border-color:#bfd2dd;box-shadow:0 8px 22px rgba(19,58,88,.08)}
+table{border-collapse:separate;border-spacing:0}
+th{background:#164b68;color:#fff;font-size:10px;font-weight:800;letter-spacing:.055em;border-bottom:3px solid #16a0b4}
+td{border-bottom:1px solid #dce6ec;color:#2a4052}
+tbody tr:nth-child(even) td{background:#f3f8fb}
+tbody tr:hover td{background:#e5f4f8}
+tbody tr:last-child td{border-bottom:0}
+.row-actions .table-action{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border:1px solid #b9dbe7;border-radius:7px;background:#eaf6fa;color:#086b91;font-size:10px}
+.row-actions .table-action:hover{background:#d6edf5;color:#064f70;text-decoration:none}
+.pagination{border-top-color:#cadbe4;color:#526c7e}
+.pagination a{border-color:#c6d6df;color:#24516a;background:#fff}
+.pagination a:hover{border-color:#70b5cf;background:#e8f5f9;color:#075d80}
+.pagination .current-page{background:#087eae;color:#fff;border-color:#087eae}
+.table-card[aria-busy="true"]{opacity:.55;pointer-events:none;transition:opacity .12s ease}
+.sortable-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:20px;color:inherit;text-decoration:none}
+.sortable-heading:hover,.sortable-heading:focus-visible{color:#d7f4ff;text-decoration:none}
+.sortable-heading:focus-visible{outline:2px solid #ffd36a;outline-offset:3px;border-radius:3px}
+.sort-indicator{flex:none;font-size:14px;line-height:1;opacity:.58}
+.sortable-heading.is-sorted{color:#fff1c8}
+.sortable-heading.is-sorted .sort-indicator{opacity:1;color:#ffd36a}
+/* Keep the printed disposition sheet in its original, neutral layout. */
+.disposition-info th{background:#f8fafc;color:#7e8c9a;font-size:9px;letter-spacing:.07em}
+.disposition-info td{background:#fff;color:#33475a;font-size:12px}
+.disposition-info tbody tr:nth-child(even) td,.disposition-info tbody tr:hover td{background:#fff}
+.disposition-signature{align-items:center}

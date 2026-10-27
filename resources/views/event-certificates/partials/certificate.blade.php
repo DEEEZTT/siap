@@ -10,13 +10,8 @@
             <h2 class="certificate-title event-certificate-title">{{ $certificate->title }}</h2>
             <p class="cert-number">Nomor: {{ $certificate->certificate_number }}</p>
             <p class="cert-label">Diberikan Kepada</p>
-            <p class="student-name">{{ strtoupper($certificate->recipient_name) }}</p>
-            <dl class="student-facts">
-                <dt>Keterangan</dt>
-                <dd>{{ $certificate->recipient_detail ?: '—' }}</dd>
-            </dl>
-
-            <p class="cert-description">
+            <p class="student-name event-certificate-name">{{ strtoupper($certificate->recipient_name) }}</p>
+            <p class="cert-description event-certificate-description">
                 {{ $certificate->description }}<br>
                 <strong>{{ $certificate->issued_at->locale('id')->translatedFormat('d F Y') }}</strong>
             </p>
@@ -25,7 +20,7 @@
 
             <div class="certificate-signatures">
                 <section class="certificate-signature">
-                    <p>KEPALA</p>
+                    <p>KEPALA SEKOLAH</p>
                     <p>SMK NEGERI 4 TANJUNGPINANG</p>
                     <div class="signature-space" aria-hidden="true"></div>
                     <strong>Yayuk Sri Mulyani Rahayu, S.Pd., M.M.</strong>
@@ -33,7 +28,7 @@
                 </section>
                 <section class="certificate-signature">
                     <p>{{ strtoupper($certificate->signer_title) }}</p>
-                    <p>{{ strtoupper(\App\Models\Certificate::CATEGORIES[$certificate->category] ?? $certificate->category) }}</p>
+                    <p aria-hidden="true">&nbsp;</p>
                     <div class="signature-space" aria-hidden="true"></div>
                     <strong>{{ $certificate->signer_name }}</strong>
                     @if($certificate->signer_nip)<span>NIP {{ $certificate->signer_nip }}</span>@endif

@@ -19,6 +19,8 @@ use Throwable;
 
 class CompanyController extends Controller
 {
+    private const SORTABLE_COLUMNS = ['name', 'partnership_type', 'document_number', 'valid_until', 'contact_person', 'phone', 'students_count', 'status'];
+
     public function index(Request $request): View
     {
         $request->validate([
@@ -26,11 +28,15 @@ class CompanyController extends Controller
             'type' => ['nullable', 'in:mou,pkl_only,unclassified'],
             'status' => ['nullable', 'in:aktif,tidak_aktif'],
             'validity' => ['nullable', 'in:berlaku,segera_berakhir,kedaluwarsa,belum_lengkap'],
+            'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
+            'direction' => ['nullable', 'in:asc,desc'],
         ]);
         // Empty select values are normalized to null, so use a truthy fallback.
         $type = $request->input('type') ?: 'all';
         $companies = $this->filteredCompanies($request, $type)
-            ->latest()
+            ->when($request->filled('sort'), fn (Builder $query) => $query
+                ->orderBy($request->string('sort')->toString(), $request->input('direction', 'asc'))
+                ->orderByDesc('id'), fn (Builder $query) => $query->latest())
             ->paginate(15)
             ->withQueryString();
         $counts = [

@@ -24,6 +24,7 @@
             <strong>{{ $periodLabel }}</strong>
         </div>
         <form class="report-filter-form" method="get">
+            @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
             <label class="filter-field">
                 <span>Tahun</span>
                 <select class="select" name="year">
@@ -219,7 +220,7 @@
             </div>
             <div class="report-attention">
                 <div class="report-chart-heading"><div><h3>Dokumen perlu perhatian</h3><p>Segera berakhir, kedaluwarsa, atau datanya belum lengkap</p></div></div>
-                <div class="table-scroll"><table><thead><tr><th>Mitra</th><th>Nomor dokumen</th><th>Berlaku sampai</th><th>Status</th></tr></thead><tbody>
+                <div class="table-scroll"><table><thead><tr><x-sortable-th column="name" label="Mitra" /><x-sortable-th column="document_number" label="Nomor dokumen" /><x-sortable-th column="valid_until" label="Berlaku sampai" /><x-sortable-th column="agreement_status" label="Status" /></tr></thead><tbody>
                     @forelse($agreements['attention'] as $company)
                         <tr><td><strong>{{ $company->name }}</strong></td><td>{{ $company->document_number ?: '—' }}</td><td>{{ $company->valid_until?->format('d/m/Y') ?? '—' }}</td><td><span class="status-pill status-{{ $company->agreementStatus() }}">{{ \App\Models\Company::agreementStatusLabels()[$company->agreementStatus()] }}</span></td></tr>
                     @empty

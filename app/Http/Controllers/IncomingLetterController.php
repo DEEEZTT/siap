@@ -13,6 +13,8 @@ use Illuminate\View\View;
 
 class IncomingLetterController extends Controller
 {
+    private const SORTABLE_COLUMNS = ['agenda_number', 'received_at', 'sender', 'subject', 'classification', 'status'];
+
     public function index(Request $request): View
     {
         $request->validate([
@@ -20,6 +22,8 @@ class IncomingLetterController extends Controller
             'status' => ['nullable', 'in:menunggu_disposisi,menunggu_konfirmasi_tu,selesai'],
             'year' => ['nullable', 'integer', 'between:1900,2100'],
             'month' => ['nullable', 'integer', 'between:1,12'],
+            'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
+            'direction' => ['nullable', 'in:asc,desc'],
         ]);
 
         $firstReceivedAt = IncomingLetter::query()->min('received_at');
@@ -59,7 +63,10 @@ class IncomingLetterController extends Controller
                 ->orWhere('letter_number', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('sender', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('subject', 'like', '%'.$request->string('q')->toString().'%')))
-            ->latest('received_at')
+            ->when($request->filled('sort'), function ($query) use ($request): void {
+                $query->orderBy($request->string('sort')->toString(), $request->input('direction', 'asc'))
+                    ->orderByDesc('id');
+            }, fn ($query) => $query->latest('received_at'))
             ->paginate(12)
             ->withQueryString();
 

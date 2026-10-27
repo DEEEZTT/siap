@@ -37,6 +37,14 @@
                 </select>
             </div>
             <div class="field">
+                <label>Jabatan / posisi (opsional)</label>
+                <input class="input" name="position" value="{{ old('position', $user->position) }}" maxlength="120" placeholder="Mis. Staf Tata Usaha">
+            </div>
+            <div class="field">
+                <label>Unit (opsional)</label>
+                <input class="input" name="unit" value="{{ old('unit', $user->unit) }}" maxlength="120" placeholder="Mis. Kurikulum">
+            </div>
+            <div class="field">
                 <label>Kata sandi baru <span class="field-hint">(kosongkan bila tetap)</span></label>
                 <input class="input" type="password" name="password" minlength="8">
             </div>
