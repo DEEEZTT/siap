@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 class CompanyController extends Controller
@@ -193,12 +192,12 @@ class CompanyController extends Controller
         return redirect()->route('companies.index')->with('success', 'Data mitra dihapus.');
     }
 
-    public function downloadMou(Company $company): StreamedResponse
+    public function downloadMou(Company $company): BinaryFileResponse
     {
         abort_unless($company->mou_document_path && Storage::disk('local')->exists($company->mou_document_path), 404);
 
-        return Storage::disk('local')->download(
-            $company->mou_document_path,
+        return response()->download(
+            Storage::disk('local')->path($company->mou_document_path),
             Str::slug($company->name).'-mou.pdf',
             ['Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff'],
         );

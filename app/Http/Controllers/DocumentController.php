@@ -23,7 +23,18 @@ class DocumentController extends Controller
         };
         abort_unless($path && Storage::disk('local')->exists($path), 404);
 
-        return $request->boolean('download') ? Storage::disk('local')->download($path) : response()->file(Storage::disk('local')->path($path), ['Content-Type' => Storage::disk('local')->mimeType($path) ?: 'application/octet-stream']);
+        $mimeType = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'pdf' => 'application/pdf',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            default => 'application/octet-stream',
+        };
+        $headers = ['Content-Type' => $mimeType, 'X-Content-Type-Options' => 'nosniff'];
+        $absolutePath = Storage::disk('local')->path($path);
+
+        return $request->boolean('download')
+            ? response()->download($absolutePath, basename($path), $headers)
+            : response()->file($absolutePath, $headers);
     }
 
     private function visibleIncoming(Request $request, int $id): IncomingLetter
