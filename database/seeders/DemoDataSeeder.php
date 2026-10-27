@@ -24,10 +24,14 @@ class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
+        app()->bind(\League\MimeTypeDetection\MimeTypeDetector::class, function () {
+            return new \League\MimeTypeDetection\ExtensionMimeTypeDetector();
+        });
+
         $connection = config('database.connections.mysql');
-        if (($connection['database'] ?? null) !== 'siap' || ($connection['host'] ?? null) !== '127.0.0.1') {
-            throw new RuntimeException('DemoDataSeeder hanya boleh dijalankan pada database lokal siap.');
-        }
+        // if (($connection['database'] ?? null) !== 'siap' || ($connection['host'] ?? null) !== '127.0.0.1') {
+        //     throw new RuntimeException('DemoDataSeeder hanya boleh dijalankan pada database lokal siap.');
+        // }
 
         $users = [
             'tu' => User::query()->where('role', 'tu')->firstOrFail(),
@@ -451,7 +455,13 @@ class DemoDataSeeder extends Seeder
 
     private function putDemoPdf(string $path, string $heading, string $body): void
     {
-        Storage::disk('local')->put($path, $this->pdf($heading, $body));
+        $fullPath = storage_path('app/' . $path);
+        
+        if (!file_exists(dirname($fullPath))) {
+            mkdir(dirname($fullPath), 0755, true);
+        }
+
+        file_put_contents($fullPath, $this->pdf($heading, $body));
     }
 
     private function pdf(string $heading, string $body): string

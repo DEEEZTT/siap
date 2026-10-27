@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (!class_exists('finfo')) {
+        $this->app->bind(
+            \League\MimeTypeDetection\MimeTypeDetector::class,
+            \League\MimeTypeDetection\ExtensionMimeTypeDetector::class
+        );
+    }
     }
 }

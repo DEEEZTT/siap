@@ -36,6 +36,7 @@ return [
             'serve' => true,
             'throw' => false,
             'report' => false,
+            'mime_detector' => \League\MimeTypeDetection\ExtensionMimeTypeDetector::class,
         ],
 
         'public' => [
@@ -45,6 +46,7 @@ return [
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+            'mime_detector' => \League\MimeTypeDetection\ExtensionMimeTypeDetector::class,
         ],
 
         's3' => [
