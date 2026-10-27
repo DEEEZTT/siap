@@ -5,14 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Disposition;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
+use App\Support\LocalStoredFile;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function show(Request $request, string $type, int $id): BinaryFileResponse|StreamedResponse
+    public function show(Request $request, string $type, int $id): BinaryFileResponse
     {
         abort_unless(in_array($request->user()->role, ['kepala_tu', 'tu', 'kepsek'], true), 403);
         $path = match ($type) {
@@ -21,8 +20,7 @@ class DocumentController extends Controller
             'disposition' => $this->visibleDisposition($request, $id)->attachment_path,
             default => abort(404),
         };
-        $disk = Storage::disk('local');
-        $absolutePath = $path ? $disk->path($path) : null;
+        $absolutePath = $path ? LocalStoredFile::resolve($path) : null;
         abort_unless($absolutePath && is_file($absolutePath), 404);
 
         $mimeType = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
@@ -32,6 +30,7 @@ class DocumentController extends Controller
             default => 'application/octet-stream',
         };
         $headers = ['Content-Type' => $mimeType, 'X-Content-Type-Options' => 'nosniff'];
+
         return $request->boolean('download')
             ? response()->download($absolutePath, basename($path), $headers)
             : response()->file($absolutePath, $headers);

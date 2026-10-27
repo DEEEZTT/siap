@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Company;
 use App\Models\Student;
+use App\Support\LocalStoredFile;
 use App\Services\SpreadsheetExport;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -194,7 +195,7 @@ class CompanyController extends Controller
 
     public function downloadMou(Company $company): BinaryFileResponse
     {
-        $path = $company->mou_document_path ? Storage::disk('local')->path($company->mou_document_path) : null;
+        $path = $company->mou_document_path ? LocalStoredFile::resolve($company->mou_document_path) : null;
         abort_unless($path && is_file($path), 404);
 
         return response()->download(
