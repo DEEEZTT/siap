@@ -21,7 +21,9 @@ class DocumentController extends Controller
             'disposition' => $this->visibleDisposition($request, $id)->attachment_path,
             default => abort(404),
         };
-        abort_unless($path && Storage::disk('local')->exists($path), 404);
+        $disk = Storage::disk('local');
+        $absolutePath = $path ? $disk->path($path) : null;
+        abort_unless($absolutePath && is_file($absolutePath), 404);
 
         $mimeType = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
             'pdf' => 'application/pdf',
@@ -30,8 +32,6 @@ class DocumentController extends Controller
             default => 'application/octet-stream',
         };
         $headers = ['Content-Type' => $mimeType, 'X-Content-Type-Options' => 'nosniff'];
-        $absolutePath = Storage::disk('local')->path($path);
-
         return $request->boolean('download')
             ? response()->download($absolutePath, basename($path), $headers)
             : response()->file($absolutePath, $headers);

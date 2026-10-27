@@ -194,10 +194,11 @@ class CompanyController extends Controller
 
     public function downloadMou(Company $company): BinaryFileResponse
     {
-        abort_unless($company->mou_document_path && Storage::disk('local')->exists($company->mou_document_path), 404);
+        $path = $company->mou_document_path ? Storage::disk('local')->path($company->mou_document_path) : null;
+        abort_unless($path && is_file($path), 404);
 
         return response()->download(
-            Storage::disk('local')->path($company->mou_document_path),
+            $path,
             Str::slug($company->name).'-mou.pdf',
             ['Content-Type' => 'application/pdf', 'X-Content-Type-Options' => 'nosniff'],
         );
