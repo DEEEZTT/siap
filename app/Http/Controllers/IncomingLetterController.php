@@ -82,7 +82,7 @@ class IncomingLetterController extends Controller
     {
         $data = $request->validate(['letter_number' => ['required', 'string', 'max:120'], 'letter_date' => ['required', 'date'], 'received_at' => ['required', 'date'], 'sender' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190'], 'classification' => ['required', 'in:biasa,segera,sangat_segera,rahasia'], 'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'], 'notes' => ['nullable', 'string', 'max:2000']]);
         $year = (int) substr($data['received_at'], 0, 4);
-        $filePath = $request->file('file')?->store('letters/incoming');
+        $filePath = $request->file('file')?->store('letters/incoming', 'local');
         $letterData = collect($data)->except('file')->all();
 
         $letter = DB::transaction(function () use ($letterData, $filePath, $request, $year): IncomingLetter {
@@ -122,7 +122,7 @@ class IncomingLetterController extends Controller
         $data = $request->validate(['letter_number' => ['required', 'string', 'max:120'], 'letter_date' => ['required', 'date'], 'received_at' => ['required', 'date'], 'sender' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190'], 'classification' => ['required', 'in:biasa,segera,sangat_segera,rahasia'], 'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'], 'notes' => ['nullable', 'string', 'max:2000']]);
         if ($request->hasFile('file')) {
             $oldFile = $incoming->file_path;
-            $data['file_path'] = $request->file('file')->store('letters/incoming');
+            $data['file_path'] = $request->file('file')->store('letters/incoming', 'local');
 
         } unset($data['file']);
         $incoming->update($data);
