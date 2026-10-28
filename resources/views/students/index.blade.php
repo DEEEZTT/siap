@@ -16,9 +16,10 @@
         <a class="button button-light" href="{{ route('students.template') }}">Unduh template Excel</a><a class="button" href="{{ route('students.create') }}">＋ Tambah siswa</a>
     </div>
 </div>
-<div class="form-card" style="max-width:none;margin-bottom:16px">
+<div class="form-card student-import-card">
     <form method="post" action="{{ route('students.import') }}" enctype="multipart/form-data">
         @csrf
+        <div class="student-import-heading"><span class="student-import-icon" aria-hidden="true">↑</span><div><h2>Impor data siswa</h2><p>Tambahkan beberapa data siswa sekaligus menggunakan file Excel.</p></div><span class="student-import-tag">XLSX / CSV</span></div>
         <div class="form-grid">
             <div class="field"><label for="import-academic-year">Tahun pelajaran</label><select class="select" id="import-academic-year" name="academic_year" required>@foreach($academicYears as $academicYear)<option value="{{ $academicYear }}" @selected(old('academic_year', $selectedAcademicYear) === $academicYear)>{{ $academicYear }}</option>@endforeach</select></div>
             <div class="field"><label for="student-file">Berkas Excel (.xlsx atau .csv)</label><input class="input" id="student-file" type="file" name="file" accept=".xlsx,.csv" required><span class="field-hint">Gunakan header sesuai template. Konsentrasi keahlian: RPL, GIM, PSPT, Animasi, TKJ, atau DKV. Tanggal dd/mm/yyyy; predikat Cukup, Baik, atau Sangat Baik.</span></div>
@@ -26,7 +27,7 @@
         <div class="form-actions"><button class="button">Impor data siswa</button></div>
     </form>
 </div>
-<div class="toolbar">
+<div class="toolbar student-toolbar">
     <form class="filter-panel" method="get">
         @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">

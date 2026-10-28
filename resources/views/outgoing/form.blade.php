@@ -13,29 +13,34 @@
 @elseif(isset($outgoing) && $outgoing->verification_note)
     <div class="alert alert-error"><b>Catatan revisi Kepala TU</b><p>{{ $outgoing->verification_note }}</p></div>
 @endif
-<form class="form-card" method="post" action="{{ isset($outgoing) ? route('outgoing.update', $outgoing) : route('outgoing.store') }}">
+<form class="form-card letter-form-card outgoing-letter-form" method="post" action="{{ isset($outgoing) ? route('outgoing.update', $outgoing) : route('outgoing.store') }}">
     @csrf
     @if(isset($outgoing))
         @method('put')
     @else
         <input type="hidden" name="type" value="{{ $type }}">
     @endif
+    <div class="letter-form-intro"><span class="letter-form-icon" aria-hidden="true">&#8593;</span><div><h2>{{ isset($outgoing) ? 'Perbarui surat' : 'Lengkapi isi surat' }}</h2><p>Pastikan nama, tanggal, dan rincian tugas sudah benar sebelum dikirim.</p></div><span class="letter-form-tag">{{ strtoupper($typeLabel) }}</span></div>
     <div class="form-grid">
         @if($type === 'undangan')
+            <div class="field full letter-form-section"><span>Informasi undangan</span></div>
             <div class="field full"><label for="invitation-context">Isi setelah “Sehubungan dengan” <span class="required">*</span></label><textarea class="textarea" id="invitation-context" name="details[invitation_context]" placeholder="Contoh: telah dilaksanakannya Penilaian Akhir Semester (PAS) Ganjil Tahun Pelajaran 2025/2026" required>{{ old('details.invitation_context', $outgoing->details['invitation_context'] ?? '') }}</textarea></div>
             <div class="field"><label for="invitation-class">Kelas <span class="required">*</span></label><input class="input" id="invitation-class" name="details[grade_class]" placeholder="Contoh: X" value="{{ old('details.grade_class', $outgoing->details['grade_class'] ?? '') }}" required></div>
             <div class="field"><label for="event-date">Tanggal kegiatan <span class="required">*</span></label><input class="input" id="event-date" type="date" name="event_date" value="{{ old('event_date', isset($outgoing) && $outgoing->event_date ? $outgoing->event_date->format('Y-m-d') : '') }}" required></div>
             <div class="field"><label for="event-time">Waktu kegiatan <span class="required">*</span></label><input class="input" id="event-time" name="event_time" placeholder="08.00 WIB" value="{{ old('event_time', $outgoing->event_time ?? '') }}" required></div>
             <div class="field"><label for="event-place">Tempat kegiatan <span class="required">*</span></label><input class="input" id="event-place" name="event_place" value="{{ old('event_place', $outgoing->event_place ?? '') }}" required></div>
         @elseif($type === 'perintah_tugas')
+            <div class="field full letter-form-section"><span>Data pegawai</span></div>
             <div class="field"><label for="employee-name">Nama pegawai yang ditugaskan <span class="required">*</span></label><input class="input" id="employee-name" name="recipient_name" value="{{ old('recipient_name', $outgoing->recipient_name ?? '') }}" required></div>
             <div class="field"><label for="task-subject">Perihal <span class="required">*</span></label><input class="input" id="task-subject" name="subject" value="{{ old('subject', $outgoing->subject ?? $defaultSubject) }}" required></div>
             <div class="field"><label for="employee-rank">Pangkat / golongan</label><input class="input" id="employee-rank" name="details[rank]" value="{{ old('details.rank', $outgoing->details['rank'] ?? '') }}"></div>
             <div class="field"><label for="employee-number">NIP / NUPTK</label><input class="input" id="employee-number" name="details[employee_number]" value="{{ old('details.employee_number', $outgoing->details['employee_number'] ?? '') }}"></div>
             <div class="field full"><label for="employee-position">Jabatan</label><input class="input" id="employee-position" name="details[position]" value="{{ old('details.position', $outgoing->details['position'] ?? '') }}"></div>
+            <div class="field full letter-form-section"><span>Rincian penugasan</span></div>
             <div class="field full"><label for="task-basis">Dasar penugasan <span class="required">*</span></label><textarea class="textarea" id="task-basis" name="details[basis]" required>{{ old('details.basis', $outgoing->details['basis'] ?? '') }}</textarea></div>
             <div class="field full"><label for="task-assignment">Rincian tugas <span class="required">*</span></label><textarea class="textarea" id="task-assignment" name="details[assignment]" placeholder="Tugas, tanggal/kegiatan, tempat, dan peserta jika ada" required>{{ old('details.assignment', $outgoing->details['assignment'] ?? '') }}</textarea></div>
         @else
+            <div class="field full letter-form-section"><span>Data siswa dan sekolah</span></div>
             <input type="hidden" name="subject" value="{{ $outgoing->subject ?? $defaultSubject }}">
             <div class="field full"><label for="student-record">Isi data dari daftar siswa PKL (opsional)</label><select class="select" id="student-record"><option value="">Pilih siswa untuk mengisi nama dan data lahir</option>@foreach($students as $student)<option data-student-name="{{ $student->name }}" data-birth-place="{{ $student->birth_place }}" data-birth-date="{{ $student->birth_date?->format('Y-m-d') }}">{{ $student->name }} · {{ $student->nis }}</option>@endforeach</select><small class="field-hint">NISN tetap diisi sesuai data mutasi.</small></div>
             <div class="field"><label for="student-name">Nama siswa <span class="required">*</span></label><input class="input" id="student-name" name="recipient_name" value="{{ old('recipient_name', $outgoing->recipient_name ?? '') }}" required></div>
@@ -46,6 +51,7 @@
             <div class="field"><label for="origin-school">Sekolah asal <span class="required">*</span></label><input class="input" id="origin-school" name="details[origin_school]" value="{{ old('details.origin_school', $outgoing->details['origin_school'] ?? '') }}" required></div>
             <div class="field"><label for="destination-school">Sekolah tujuan <span class="required">*</span></label><input class="input" id="destination-school" name="details[destination_school]" value="{{ old('details.destination_school', $outgoing->details['destination_school'] ?? '') }}" required></div>
             <div class="field full"><label for="origin-school-address">Alamat sekolah asal <span class="required">*</span></label><input class="input" id="origin-school-address" name="details[origin_school_address]" value="{{ old('details.origin_school_address', $outgoing->details['origin_school_address'] ?? '') }}" required></div>
+            <div class="field full letter-form-section"><span>Data orang tua / wali</span></div>
             <div class="field"><label for="father-name">Nama ayah / wali</label><input class="input" id="father-name" name="details[father_name]" value="{{ old('details.father_name', $outgoing->details['father_name'] ?? '') }}"></div>
             <div class="field"><label for="father-occupation">Pekerjaan ayah / wali</label><input class="input" id="father-occupation" name="details[father_occupation]" value="{{ old('details.father_occupation', $outgoing->details['father_occupation'] ?? '') }}"></div>
             <div class="field"><label for="mother-name">Nama ibu</label><input class="input" id="mother-name" name="details[mother_name]" value="{{ old('details.mother_name', $outgoing->details['mother_name'] ?? '') }}"></div>
@@ -54,6 +60,7 @@
             <div class="field full"><label for="mutation-attachments">Dokumen yang diserahkan</label><textarea class="textarea" id="mutation-attachments" name="details[attachments]" placeholder="Satu dokumen per baris">{{ old('details.attachments', $outgoing->details['attachments'] ?? "Surat pindah Dapodik\nFotokopi ijazah SLTP\nFotokopi Kartu Keluarga\nFotokopi Akte Kelahiran") }}</textarea></div>
         @endif
         @if($type !== 'undangan')
+            <div class="field full letter-form-section"><span>Catatan tambahan</span></div>
             <div class="field full"><label for="letter-notes">Catatan buku agenda</label><input class="input" id="letter-notes" name="notes" value="{{ old('notes', $outgoing->notes ?? '') }}" placeholder="Catatan tambahan (opsional)"></div>
         @endif
     </div>

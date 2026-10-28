@@ -1,13 +1,14 @@
 @extends('layouts.app')
 @section('title', 'Ringkasan')
 @section('content')
-<div class="welcome-row">
+<div class="welcome-row dashboard-hero">
     <div>
-        <div class="eyebrow blue">{{ now()->translatedFormat('l, d F Y') }}</div>
+        <div class="eyebrow blue dashboard-date"><span class="live-dot"></span>{{ now()->translatedFormat('l, d F Y') }}</div>
         <h1>Selamat datang, {{ auth()->user()->name }}.</h1>
-        <p class="muted">Ringkasan administrasi surat dan kegiatan PKL sekolah.</p>
+        <p class="muted">Pantau administrasi surat dan kegiatan PKL sekolah dalam satu tempat.</p>
     </div>
-    <div class="welcome-seal">
+    <div class="welcome-seal dashboard-seals">
+        <span class="seal-caption">SMKN 4<br>TANJUNGPINANG</span>
         <img src="{{ asset('images/kepri.png') }}" alt="Lambang Provinsi Kepulauan Riau">
         <img src="{{ asset('images/smkn4.png') }}" alt="Lambang SMKN 4">
     </div>
@@ -39,7 +40,8 @@
 @php
     $panelCount = (int) $canSeeIncoming + (int) $canSeeOutgoing + ((int) $canSeePkl * 2);
 @endphp
-<div class="content-grid {{ $panelCount === 1 ? 'content-grid-single' : '' }}">
+<div class="dashboard-section-title"><div><span class="eyebrow">AKTIVITAS TERKINI</span><h2>Yang perlu diperhatikan</h2></div><span class="dashboard-section-note">Pembaruan dari data sekolah</span></div>
+<div class="content-grid dashboard-grid {{ $panelCount === 1 ? 'content-grid-single' : '' }}">
     @if($canSeeIncoming)
         <section class="panel">
             <div class="panel-heading">

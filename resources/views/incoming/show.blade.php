@@ -10,8 +10,9 @@
     <a class="button button-light" href="{{ route('incoming.index') }}">← Kembali ke agenda</a>
 </div>
 
-<div class="detail-grid">
-    <section class="detail-card">
+<div class="detail-grid record-detail-grid">
+    <section class="detail-card record-detail-card">
+        <span class="detail-card-kicker">RINGKASAN DOKUMEN</span>
         <h2>Informasi surat</h2>
         <dl class="detail-list">
             <dt>Nomor agenda</dt><dd>{{ $incoming->agenda_number }}</dd>
@@ -52,7 +53,8 @@
         @endif
     </section>
 
-    <section class="detail-card">
+    <section class="detail-card record-detail-card record-action-card">
+        <span class="detail-card-kicker">TINDAKAN BERIKUTNYA</span>
         <h2>Lembar disposisi</h2>
         @if($incoming->disposition)
             <dl class="detail-list">

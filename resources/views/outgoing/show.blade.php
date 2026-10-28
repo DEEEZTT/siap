@@ -1,12 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Rincian surat keluar')
 @section('content')
-<div class="page-heading">
+<div class="page-heading outgoing-page-heading">
     <div><span class="eyebrow blue">{{ $outgoing->agenda_number ?? 'SURAT KELUAR' }}</span><h1>{{ $outgoing->subject }}</h1><p>Surat untuk {{ $outgoing->recipient_name }}</p></div>
     <a class="button button-light" href="{{ route('outgoing.index') }}">← Kembali ke agenda</a>
 </div>
-<div class="detail-grid">
-    <section class="detail-card">
+<div class="detail-grid record-detail-grid">
+    <section class="detail-card record-detail-card">
+        <span class="detail-card-kicker">RINGKASAN DOKUMEN</span>
         <h2>Isi surat</h2>
         <dl class="detail-list">
             <dt>Jenis surat</dt><dd>{{ str_replace('_', ' ', $outgoing->type) }}</dd>
@@ -69,7 +70,8 @@
         @endif
     </section>
 
-    <section class="detail-card">
+    <section class="detail-card record-detail-card record-action-card">
+        <span class="detail-card-kicker">TINDAKAN BERIKUTNYA</span>
         @if($outgoing->status === 'menunggu_verifikasi' && auth()->user()->role === 'kepala_tu')
             <h2>Verifikasi Kepala TU</h2>
             <form method="post" action="{{ route('outgoing.verify', $outgoing) }}">
