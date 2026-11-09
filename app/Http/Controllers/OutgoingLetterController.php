@@ -310,7 +310,7 @@ class OutgoingLetterController extends Controller
         return back()->with('success', $message);
     }
 
-    public function print(Request $request, OutgoingLetter $outgoing)
+    public function print(OutgoingLetter $outgoing)
     {
         $kepriLogo = public_path('images/kepri-pdf.png');
         $schoolLogo = public_path('images/smkn4-pdf.png');
@@ -333,7 +333,7 @@ class OutgoingLetterController extends Controller
         ]));
         $headers = [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline').'; filename="'.$filename.'"',
+            'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'X-Content-Type-Options' => 'nosniff',
         ];
 

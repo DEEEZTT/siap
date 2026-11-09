@@ -1002,14 +1002,6 @@ html.modal-scroll-locked,body.modal-scroll-locked{overflow:hidden;overscroll-beh
 .outgoing-submit-summary dd{margin:0;overflow-wrap:anywhere;font-weight:600}
 .outgoing-submit-actions{display:flex;justify-content:flex-end;gap:.65rem;margin-top:1.25rem}
 @media(max-width:480px){.outgoing-submit-summary{grid-template-columns:1fr;gap:.2rem}.outgoing-submit-summary dd{margin-bottom:.7rem}.outgoing-submit-actions{flex-direction:column-reverse}.outgoing-submit-actions .button{width:100%;justify-content:center}}
-.outgoing-document-dialog{width:min(96vw,74rem);height:min(94vh,60rem);max-width:none;max-height:none;padding:0;border:0;border-radius:1rem;background:#eef2f5;box-shadow:0 24px 80px #0f172a66;overflow:hidden}
-.outgoing-document-dialog::backdrop{background:#0f172a99;backdrop-filter:blur(3px)}
-.outgoing-document-dialog-header{height:auto;min-height:4.25rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.65rem 1rem;background:#fff;border-bottom:1px solid #dbe2ea}
-.outgoing-document-dialog-header>strong{font-size:1rem;color:#172033}
-.outgoing-document-dialog-actions{display:flex;align-items:center;gap:.5rem}
-.outgoing-document-dialog-actions .button{white-space:nowrap}
-.outgoing-document-frame{display:block;width:100%;height:calc(100% - 4.25rem);border:0;background:#eef2f5}
-@media(max-width:600px){.outgoing-document-dialog{width:100vw;height:100dvh;max-height:100dvh;border-radius:0}.outgoing-document-dialog-header{align-items:flex-start;flex-direction:column;gap:.45rem;padding:.55rem .7rem}.outgoing-document-dialog-actions{width:100%;gap:.35rem}.outgoing-document-dialog-actions .button{flex:1;padding:.55rem .35rem;font-size:.78rem;justify-content:center}.outgoing-document-frame{height:calc(100% - 6.2rem)}}
 .invitation-preview-dialog{display:flex;flex-direction:column;width:min(96vw,74rem);height:min(94vh,60rem);max-width:none;max-height:none;padding:0;border:0;border-radius:1rem;background:#eef2f5;box-shadow:0 24px 80px #0f172a66;overflow:hidden}
 .invitation-preview-dialog::backdrop{background:#0f172a99;backdrop-filter:blur(3px)}
 .invitation-preview-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.25rem;background:#fff;border-bottom:1px solid #dbe2ea}
