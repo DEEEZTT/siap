@@ -99,9 +99,20 @@
         .draft-watermark { position: absolute; top: 50%; left: 50%; color: rgba(200,30,30,.16); font-size: 128pt; font-weight: bold; letter-spacing: .08em; transform: translate(-50%,-50%) rotate(-30deg); white-space: nowrap; }
         @if(!empty($screenPreview))
             @media screen {
-                body,.letter-paper { font-size: 12pt; }
+                html { min-height: 100%; background: #e9eef2; }
+                body { min-height: 100%; padding: 16px 0; background: #e9eef2; font-size: 12pt; }
+                .letter-paper { box-sizing: border-box; width: 210mm; max-width: calc(100vw - 32px); min-height: 297mm; height: auto; margin: 0 auto; padding: 10mm 18mm 9mm; background: #fff; box-shadow: 0 4px 18px #182b4220; font-size: 12pt; }
                 .letter-task-layout,.task-letter-basis { font-size: 11pt; line-height: 1.4; }
                 .task-participant-table { font-size: 10.5pt; line-height: 1.3; }
+            }
+            @media screen and (max-width: 700px) {
+                body { padding: 8px 0; }
+                .letter-paper { max-width: calc(100vw - 16px); padding: 8mm 6mm 9mm; }
+                .letterhead-logo img,.letter-paper-invitation .letterhead-logo img { width: 16mm; height: 18mm; }
+                .letter-head strong { font-size: 9pt; }
+                .letter-head b { font-size: 10pt; }
+                .letterhead-center b:last-of-type { font-size: 11pt; }
+                .letter-head small { font-size: 7px; }
             }
         @endif
     </style>

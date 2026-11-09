@@ -80,7 +80,7 @@
         @endphp
         <h1 class="letter-document-title">SURAT PERINTAH TUGAS</h1>
         <div class="task-letter-number">NOMOR: {{ $outgoing->letter_number ?: 'Menunggu verifikasi' }}</div>
-        <table class="task-letter-basis"><tbody><tr><td width="21%">Dasar</td><td width="3%">:</td><td width="76%">{{ $breakLongPdfTokens($outgoing->details['basis']) }}</td></tr></tbody></table>
+        <table class="task-letter-basis"><tbody><tr><td width="22%">Dasar</td><td width="3%">:</td><td width="75%">{{ $breakLongPdfTokens($outgoing->details['basis']) }}</td></tr></tbody></table>
         <h2 class="letter-document-subtitle">MEMERINTAHKAN:</h2>
         <table class="letter-task-layout">
             <tbody>

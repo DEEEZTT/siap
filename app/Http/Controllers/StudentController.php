@@ -75,7 +75,7 @@ class StudentController extends Controller
                     $student->internship_start?->format('d/m/Y') ?? '',
                     $student->internship_end?->format('d/m/Y') ?? '',
                     $student->predicate ?? '',
-                    $student->completed_at ? 'Selesai' : 'Berlangsung',
+                    $student->internship_end?->lt(Carbon::today()) ? 'Selesai' : 'Berlangsung',
                     $student->certificate_number ?? '',
                     $student->completed_at?->format('d/m/Y') ?? '',
                     $student->academic_year,
@@ -413,9 +413,18 @@ class StudentController extends Controller
                 ->orWhere('nis', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('major', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhereHas('company', fn (Builder $companyQuery) => $companyQuery->where('name', 'like', '%'.$request->string('q')->toString().'%'))))
-            ->when($request->filled('status'), fn (Builder $query) => $request->string('status')->toString() === 'selesai'
-                ? $query->whereNotNull('completed_at')
-                : $query->whereNull('completed_at'))
+            ->when($request->filled('status'), function (Builder $query) use ($request): void {
+                $query->where(function (Builder $statusQuery) use ($request): void {
+                    if ($request->string('status')->toString() === 'selesai') {
+                        $statusQuery->whereDate('internship_end', '<', Carbon::today()->toDateString());
+
+                        return;
+                    }
+
+                    $statusQuery->whereNull('internship_end')
+                        ->orWhereDate('internship_end', '>=', Carbon::today()->toDateString());
+                });
+            })
             ->when($academicYear, fn (Builder $query) => $query->where('academic_year', $academicYear));
     }
 

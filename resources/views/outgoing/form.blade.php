@@ -144,7 +144,7 @@
             <div class="outgoing-signature-block invitation-signature"><div class="signature">Kepala Sekolah,<span class="signature-space" aria-hidden="true"></span><b>Yayuk Sri Mulyani Rahayu, S.Pd., M.M.</b>Pembina Tk. I<br>NIP 19770421 200502 2 011</div></div>
         @elseif($type === 'perintah_tugas')
             <h1 class="letter-document-title">SURAT PERINTAH TUGAS</h1><div class="task-letter-number">NOMOR: Menunggu verifikasi</div>
-            <table class="task-letter-basis"><tbody><tr><td width="21%">Dasar</td><td width="3%">:</td><td width="76%" data-preview-field="basis">[dasar penugasan]</td></tr></tbody></table><h2 class="letter-document-subtitle">MEMERINTAHKAN:</h2>
+            <table class="task-letter-basis"><tbody><tr><td width="22%">Dasar</td><td width="3%">:</td><td width="75%" data-preview-field="basis">[dasar penugasan]</td></tr></tbody></table><h2 class="letter-document-subtitle">MEMERINTAHKAN:</h2>
             <table class="letter-task-layout"><tbody data-preview-recipients></tbody><tbody><tr><td width="22%">Untuk</td><td width="3%">:</td><td colspan="4"><span class="task-assignment-text" data-preview-field="assignment">[rincian tugas]</span><div class="task-participant-preview" data-preview-participants hidden></div></td></tr></tbody></table><p class="letter-closing">Tugas ini harap dilaksanakan dengan penuh tanggung jawab dan setelah selesai membuat laporan.</p>
         @else
             <h1 class="letter-document-title">SURAT REKOMENDASI MUTASI/PINDAH SISWA</h1><div class="mutation-letter-number">Nomor: Menunggu verifikasi</div><p class="letter-body">Yang bertanda tangan di bawah ini:</p>

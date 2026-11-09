@@ -53,7 +53,12 @@
     <td>{{ $student->company?->name ?? '—' }}</td>
     <td>{{ $student->internship_start?->format('d/m/Y') ?? '—' }} – {{ $student->internship_end?->format('d/m/Y') ?? '—' }}</td>
     <td>{{ $student->predicate ?: 'Belum dipilih' }}</td>
-    <td><span class="status {{ $student->completed_at ? 'status-selesai' : 'status-draft' }}">{{ $student->completed_at ? 'Selesai' : 'Berlangsung' }}</span></td>
+    <td>
+        <span class="status {{ $student->internship_end?->lt(today()) ? 'status-selesai' : 'status-draft' }}">{{ $student->internship_end?->lt(today()) ? 'Selesai' : 'Berlangsung' }}</span>
+        @if(!$student->completed_at && $student->internship_end?->lt(today()) && !in_array($student->predicate, ['Cukup', 'Baik', 'Sangat Baik'], true))
+            <small class="student-predicate-hint">Pilih predikat lewat Ubah data agar sertifikat bisa diterbitkan.</small>
+        @endif
+    </td>
     <td><div class="row-actions student-actions">
         @if(!$student->completed_at)<a class="button button-light button-small" href="{{ route('students.edit', $student) }}" data-student-edit-modal>Ubah data</a>@endif
         @if($student->completed_at)
@@ -61,11 +66,9 @@
         @endif
         @if($student->completed_at)
             <a class="button button-light button-small" href="{{ route('certificates.show', $student) }}" data-detail-modal data-pkl-certificate-preview-modal>Lihat sertifikat</a>
-        @elseif($student->internship_end && $student->internship_end->isPast())
+        @elseif($student->internship_end?->lt(today()))
             @if(in_array($student->predicate, ['Cukup', 'Baik', 'Sangat Baik'], true))
                 <form class="student-complete-form" method="post" action="{{ route('students.complete', $student) }}" onsubmit="return confirm('Yakin terbitkan sertifikat PKL ini dengan predikat {{ $student->predicate }}?')">@csrf<input type="hidden" name="predicate" value="{{ $student->predicate }}"><button class="button button-small" type="submit" aria-label="Terbitkan sertifikat untuk {{ $student->name }}">Terbitkan sertifikat</button></form>
-            @else
-                <a class="button button-light button-small" href="{{ route('students.edit', $student) }}">Atur predikat</a>
             @endif
         @endif
     </div></td>

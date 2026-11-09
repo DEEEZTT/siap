@@ -829,7 +829,8 @@ document.addEventListener('click',async event=>{
     tableSortPending=false;
     if(!refreshed)window.location.assign(url);
 });
-window.addEventListener('popstate',async()=>{await refreshSortedTable(window.location.href,false,!!document.querySelector('.js-ajax-table-filter'))});
+let spaCurrentPath=location.pathname;
+window.addEventListener('popstate',async()=>{if(location.pathname!==spaCurrentPath)return;await refreshSortedTable(window.location.href,false,!!document.querySelector('.js-ajax-table-filter'))});
 
 document.addEventListener('click', event => {
     const link = event.target.closest('.js-print-disposition');
@@ -937,4 +938,193 @@ document.addEventListener('change',event=>{
     if(instructions[0])instructions[0].setCustomValidity(hasInstruction?'':'Pilih arahan disposisi terlebih dahulu.');
     const otherInstruction=form.elements.namedItem('other_instruction');
     if(otherInstruction)otherInstruction.required=instructions.some(input=>input.checked&&input.value==='lainnya');
+});
+
+// Keep internal navigation and ordinary form submissions inside the current app shell.
+let documentViewerDialog;
+let documentViewerObjectUrl;
+let documentViewerRequestId=0;
+let spaNavigationController;
+history.replaceState({...history.state,siapSpaPage:true},'',location.href);
+
+function showDocumentViewer(url){
+    if(!documentViewerDialog){
+        documentViewerDialog=document.createElement('dialog');
+        documentViewerDialog.className='outgoing-document-dialog';
+        documentViewerDialog.setAttribute('aria-label','Pratinjau berkas');
+        documentViewerDialog.innerHTML='<header class="outgoing-document-dialog-header"><strong data-document-viewer-title>Pratinjau berkas</strong><div class="outgoing-document-dialog-actions"><a class="button button-light" data-document-viewer-download>Unduh</a><button class="button button-light" type="button" data-document-viewer-print>Cetak</button><button class="button button-light" type="button" data-document-viewer-close>Tutup</button></div></header><div class="document-viewer-image-stage" hidden><img alt="Foto lampiran"><p class="document-viewer-error" hidden></p></div><iframe class="outgoing-document-frame" title="Pratinjau berkas"></iframe>';
+        document.body.append(documentViewerDialog);
+        documentViewerDialog.addEventListener('click',event=>{if(event.target===documentViewerDialog)documentViewerDialog.close()});
+        documentViewerDialog.querySelector('[data-document-viewer-close]').addEventListener('click',()=>documentViewerDialog.close());
+        documentViewerDialog.querySelector('[data-document-viewer-print]').addEventListener('click',()=>{
+            try{
+                const imageStage=documentViewerDialog.querySelector('.document-viewer-image-stage');
+                if(imageStage.hidden)documentViewerDialog.querySelector('iframe').contentWindow.print();
+            }catch{window.alert('Berkas belum selesai dimuat. Coba lagi sebentar.')}
+        });
+        documentViewerDialog.addEventListener('close',()=>{
+            documentViewerDialog.querySelector('iframe').src='about:blank';
+            if(documentViewerObjectUrl){URL.revokeObjectURL(documentViewerObjectUrl);documentViewerObjectUrl=null}
+        });
+    }
+    const previewUrl=new URL(url,location.href);
+    const downloadUrl=new URL(previewUrl.href);
+    downloadUrl.searchParams.set('download','1');
+    const title=documentViewerDialog.querySelector('[data-document-viewer-title]');
+    const iframe=documentViewerDialog.querySelector('iframe');
+    const imageStage=documentViewerDialog.querySelector('.document-viewer-image-stage');
+    const image=imageStage.querySelector('img');
+    const imageError=imageStage.querySelector('.document-viewer-error');
+    const printButton=documentViewerDialog.querySelector('[data-document-viewer-print]');
+    const requestId=++documentViewerRequestId;
+    iframe.hidden=false;
+    iframe.src='about:blank';
+    imageStage.hidden=true;
+    image.hidden=false;
+    imageError.hidden=true;
+    printButton.hidden=false;
+    if(documentViewerObjectUrl){URL.revokeObjectURL(documentViewerObjectUrl);documentViewerObjectUrl=null}
+    title.textContent=previewUrl.pathname.includes('/disposition/')?'Lampiran disposisi':'Pratinjau berkas surat';
+    documentViewerDialog.querySelector('[data-document-viewer-download]').href=downloadUrl.href;
+    documentViewerDialog.showModal();
+    fetch(previewUrl.href,{method:'HEAD',headers:{'X-Requested-With':'XMLHttpRequest'}}).then(async response=>{
+        if(requestId!==documentViewerRequestId)return;
+        const mime=response.headers.get('Content-Type')||'';
+        if(response.ok&&mime.toLowerCase().startsWith('image/')){
+            const imageResponse=await fetch(previewUrl.href,{headers:{'X-Requested-With':'XMLHttpRequest'}});
+            if(!imageResponse.ok)throw new Error(`Foto gagal dimuat (HTTP ${imageResponse.status}).`);
+            const imageBlob=await imageResponse.blob();
+            if(requestId!==documentViewerRequestId)return;
+            documentViewerObjectUrl=URL.createObjectURL(imageBlob);
+            image.src=documentViewerObjectUrl;
+            image.alt=previewUrl.pathname.includes('/disposition/')?'Foto lampiran disposisi':'Foto lampiran surat';
+            imageStage.hidden=false;
+            iframe.hidden=true;
+            printButton.hidden=true;
+            title.textContent='Pratinjau foto';
+        }else if(response.ok&&mime.toLowerCase().includes('pdf')){
+            iframe.src=previewUrl.href;
+        }else if(response.status>=400&&response.status!==405){
+            imageError.textContent=`Berkas tidak dapat dibuka (HTTP ${response.status}).`;
+            imageError.hidden=false;
+            image.hidden=true;
+            imageStage.hidden=false;
+            iframe.hidden=true;
+            printButton.hidden=true;
+        }else{
+            iframe.src=previewUrl.href;
+        }
+    }).catch(()=>{if(requestId===documentViewerRequestId)iframe.src=previewUrl.href});
+}
+
+async function loadSpaPage(url,{pushHistory=false}={}){
+    spaNavigationController?.abort();
+    const controller=new AbortController();
+    spaNavigationController=controller;
+    try{
+        const response=await fetch(url,{signal:controller.signal,headers:{'X-Requested-With':'XMLHttpRequest','Accept':'text/html'}});
+        const page=pageContent(await response.text());
+        const nextShell=page.querySelector('.shell');
+        const currentShell=document.querySelector('.shell');
+        if(!nextShell||!currentShell||new URL(response.url).origin!==location.origin){
+            window.location.assign(response.url||url);
+            return;
+        }
+        if(!response.ok&&!nextShell)throw new Error(`Halaman gagal dimuat (HTTP ${response.status}).`);
+        currentShell.replaceWith(nextShell);
+        document.title=page.title||document.title;
+        const finalUrl=response.url||url;
+        if(pushHistory){
+            if(new URL(finalUrl).pathname===location.pathname&&new URL(finalUrl).search===location.search){
+                history.replaceState({siapSpaPage:true},'',finalUrl);
+            }else history.pushState({siapSpaPage:true},'',finalUrl);
+        }
+        spaCurrentPath=new URL(finalUrl).pathname;
+        document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+        window.scrollTo({top:0,behavior:'auto'});
+        updateOutgoingPreview(nextShell);
+        updateEventCertificatePreview(nextShell);
+        fitEventCertificateTitles();
+    }catch(error){
+        if(error.name==='AbortError')return;
+        const pageWrap=document.querySelector('.page-wrap');
+        if(pageWrap){
+            const alert=document.createElement('div');
+            alert.className='alert alert-error';
+            alert.textContent=`Halaman tidak dapat dimuat. Periksa koneksi lalu coba lagi. (${error.message})`;
+            pageWrap.prepend(alert);
+        }
+    }finally{
+        if(spaNavigationController===controller)spaNavigationController=null;
+    }
+}
+
+document.addEventListener('click',event=>{
+    if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+    const link=event.target.closest('a[href]');
+    if(!link)return;
+    const url=new URL(link.href,location.href);
+    if(url.origin!==location.origin)return;
+    if(url.pathname.startsWith('/documents/')&&!url.searchParams.has('download')){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showDocumentViewer(url.href);
+        return;
+    }
+    if(link.hasAttribute('download')||link.target==='_blank'||link.relList.contains('external'))return;
+    if(link.href.startsWith('javascript:')||link.hash&&url.pathname===location.pathname&&url.search===location.search)return;
+    if(!document.querySelector('.shell')||link.closest('dialog'))return;
+    event.preventDefault();
+    loadSpaPage(url.href,{pushHistory:true});
+});
+
+document.addEventListener('submit',event=>{
+    if(event.defaultPrevented)return;
+    const form=event.target.closest('form');
+    if(!form||!form.closest('.shell')||form.closest('dialog')||form.target||form.hasAttribute('data-native-submit'))return;
+    const submitter=event.submitter;
+    const action=new URL(submitter?.formAction||form.action||location.href,location.href);
+    if(action.origin!==location.origin)return;
+    const method=(submitter?.formMethod||form.method||'GET').toUpperCase();
+    if(!['GET','POST'].includes(method))return;
+    event.preventDefault();
+    const data=new FormData(form);
+    if(submitter?.name)data.append(submitter.name,submitter.value);
+    if(method==='GET'){
+        action.search='';
+        for(const [name,value] of data){if(value instanceof File)continue;action.searchParams.append(name,String(value))}
+        loadSpaPage(action.href,{pushHistory:true});
+        return;
+    }
+    form.setAttribute('aria-busy','true');
+    fetch(action.href,{method:'POST',body:data,headers:{'X-Requested-With':'XMLHttpRequest','Accept':'text/html'}})
+        .then(response=>{if(form.isConnected)return loadSpaResponse(response)})
+        .catch(error=>{
+            const alert=document.createElement('div');alert.className='alert alert-error';alert.textContent=`Data gagal dikirim. Periksa koneksi lalu coba lagi. (${error.message})`;form.prepend(alert);
+        })
+        .finally(()=>form.removeAttribute('aria-busy'));
+});
+
+async function loadSpaResponse(response){
+    const html=await response.text();
+    const page=pageContent(html);
+    const nextShell=page.querySelector('.shell');
+    const currentShell=document.querySelector('.shell');
+    if(!nextShell||!currentShell||new URL(response.url).origin!==location.origin){
+        window.location.assign(response.url);
+        return;
+    }
+    currentShell.replaceWith(nextShell);
+    document.title=page.title||document.title;
+    if(response.url!==location.href)history.pushState({siapSpaPage:true},'',response.url);
+    spaCurrentPath=new URL(response.url).pathname;
+    document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+    window.scrollTo({top:0,behavior:'auto'});
+    updateOutgoingPreview(nextShell);
+    updateEventCertificatePreview(nextShell);
+    fitEventCertificateTitles();
+}
+
+window.addEventListener('popstate',event=>{
+    if(location.pathname!==spaCurrentPath)loadSpaPage(location.href);
 });
