@@ -24,7 +24,7 @@
             <div class="field"><label for="import-academic-year">Tahun pelajaran</label><select class="select" id="import-academic-year" name="academic_year" required>@foreach($academicYears as $academicYear)<option value="{{ $academicYear }}" @selected(old('academic_year', $selectedAcademicYear) === $academicYear)>{{ $academicYear }}</option>@endforeach</select></div>
             <div class="field"><label for="student-file">Berkas Excel (.xlsx atau .csv)</label><input class="input" id="student-file" type="file" name="file" accept=".xlsx,.csv" required><span class="field-hint">Gunakan header sesuai template. Konsentrasi keahlian: RPL, GIM, PSPT, Animasi, TKJ, atau DKV. Tanggal dd/mm/yyyy; predikat Cukup, Baik, atau Sangat Baik.</span></div>
         </div>
-        <div class="form-actions"><button class="button">Impor data siswa</button></div>
+        <div class="form-actions"><button class="button" type="submit" formmethod="post" formaction="{{ route('students.import') }}">Impor data siswa</button></div>
     </form>
 </div>
 <div class="toolbar student-toolbar">
