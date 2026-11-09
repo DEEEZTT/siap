@@ -1,6 +1,29 @@
 document.addEventListener('click',event=>{const target=event.target.closest('[data-confirm]');if(target&&!window.confirm(target.dataset.confirm))event.preventDefault()});document.addEventListener('submit',event=>{const form=event.target.closest('[data-confirm]');if(form&&!window.confirm(form.dataset.confirm))event.preventDefault()});
 
+let outgoingDocumentDialog;
 let invitationPreviewDialog;
+document.addEventListener('click',event=>{
+    const link=event.target.closest('[data-outgoing-document-preview]');
+    if(!link||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if(!outgoingDocumentDialog){
+        outgoingDocumentDialog=document.createElement('dialog');
+        outgoingDocumentDialog.className='outgoing-document-dialog';
+        outgoingDocumentDialog.setAttribute('aria-label','Pratinjau dokumen surat keluar');
+        outgoingDocumentDialog.innerHTML='<header class="outgoing-document-dialog-header"><strong>Pratinjau surat</strong><div class="outgoing-document-dialog-actions"><button class="button button-light" type="button" data-outgoing-document-print>Cetak / Simpan PDF</button><button class="button button-light" type="button" data-outgoing-document-close aria-label="Tutup pratinjau">Tutup</button></div></header><iframe class="outgoing-document-frame" title="Pratinjau dokumen surat keluar"></iframe>';
+        document.body.append(outgoingDocumentDialog);
+        outgoingDocumentDialog.addEventListener('click',click=>{if(click.target===outgoingDocumentDialog)outgoingDocumentDialog.close()});
+        outgoingDocumentDialog.querySelector('[data-outgoing-document-close]').addEventListener('click',()=>outgoingDocumentDialog.close());
+        outgoingDocumentDialog.querySelector('[data-outgoing-document-print]').addEventListener('click',()=>{
+            try{outgoingDocumentDialog.querySelector('iframe').contentWindow.print()}catch{window.alert('Pratinjau belum selesai dimuat. Coba lagi sebentar.')}
+        });
+        outgoingDocumentDialog.addEventListener('close',()=>{outgoingDocumentDialog.querySelector('iframe').src='about:blank'});
+    }
+    outgoingDocumentDialog.querySelector('iframe').src=link.href;
+    if(!outgoingDocumentDialog.open)outgoingDocumentDialog.showModal();
+},{capture:true});
+
 document.addEventListener('click',event=>{
     const button=event.target.closest('[data-invitation-preview-open]');
     if(!button)return;

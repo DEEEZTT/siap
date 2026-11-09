@@ -59,7 +59,7 @@
             @endif
         </dl>
         <div class="document-actions">
-            <a class="button" href="{{ route('outgoing.print', $outgoing) }}" target="_blank" rel="noopener">Pratinjau / cetak / simpan PDF</a>
+            <a class="button" href="{{ route('outgoing.print', ['outgoing' => $outgoing, 'preview' => 1]) }}" data-outgoing-document-preview>Pratinjau / cetak / simpan PDF</a>
             @if($outgoing->status === 'siap_dicetak' && in_array(auth()->user()->role, ['tu', 'kepala_tu'], true))
                 <form method="post" action="{{ route('outgoing.complete', $outgoing) }}" onsubmit="return confirm('Tandai surat ini selesai dicetak atau dikirim?')">
                     @csrf

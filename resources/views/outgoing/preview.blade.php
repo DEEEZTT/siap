@@ -46,7 +46,7 @@
             <dt>Status</dt><dd><span class="status status-{{ $outgoing->status }}">{{ $outgoing->statusLabel() }}</span></dd>
         </dl>
         <div class="document-actions">
-            <a class="button button-light" href="{{ route('outgoing.print', $outgoing) }}" target="_blank" rel="noopener">Pratinjau / cetak</a>
+            <a class="button button-light" href="{{ route('outgoing.print', ['outgoing' => $outgoing, 'preview' => 1]) }}" data-outgoing-document-preview>Pratinjau / cetak</a>
         </div>
     </section>
 

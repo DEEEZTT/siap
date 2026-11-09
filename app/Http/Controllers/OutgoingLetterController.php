@@ -310,8 +310,12 @@ class OutgoingLetterController extends Controller
         return back()->with('success', $message);
     }
 
-    public function print(OutgoingLetter $outgoing)
+    public function print(Request $request, OutgoingLetter $outgoing)
     {
+        if ($request->boolean('preview')) {
+            return view('outgoing.modal-preview', compact('outgoing'));
+        }
+
         $kepriLogo = public_path('images/kepri-pdf.png');
         $schoolLogo = public_path('images/smkn4-pdf.png');
         abort_unless(is_file($kepriLogo) && is_file($schoolLogo), 500, 'Logo surat tidak ditemukan.');
