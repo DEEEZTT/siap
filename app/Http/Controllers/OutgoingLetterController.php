@@ -313,7 +313,16 @@ class OutgoingLetterController extends Controller
     public function print(Request $request, OutgoingLetter $outgoing)
     {
         if ($request->boolean('preview')) {
-            return view('outgoing.modal-preview', compact('outgoing'));
+            $kepriLogo = public_path('images/kepri-pdf.png');
+            $schoolLogo = public_path('images/smkn4-pdf.png');
+            abort_unless(is_file($kepriLogo) && is_file($schoolLogo), 500, 'Logo surat tidak ditemukan.');
+
+            return view('outgoing.pdf', [
+                'outgoing' => $outgoing,
+                'logoKepri' => 'data:image/png;base64,'.base64_encode((string) file_get_contents($kepriLogo)),
+                'logoSmkn4' => 'data:image/png;base64,'.base64_encode((string) file_get_contents($schoolLogo)),
+                'screenPreview' => true,
+            ]);
         }
 
         $kepriLogo = public_path('images/kepri-pdf.png');

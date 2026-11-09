@@ -97,6 +97,13 @@
         .task-participant-table th:first-child,.task-participant-table td:first-child { padding-left: 0; }
         .task-participant-table th:nth-child(2),.task-participant-table td:nth-child(2) { overflow-wrap: anywhere; word-wrap: break-word; word-break: break-word; }
         .draft-watermark { position: absolute; top: 50%; left: 50%; color: rgba(200,30,30,.16); font-size: 128pt; font-weight: bold; letter-spacing: .08em; transform: translate(-50%,-50%) rotate(-30deg); white-space: nowrap; }
+        @if(!empty($screenPreview))
+            @media screen {
+                body,.letter-paper { font-size: 12pt; }
+                .letter-task-layout,.task-letter-basis { font-size: 11pt; line-height: 1.4; }
+                .task-participant-table { font-size: 10.5pt; line-height: 1.3; }
+            }
+        @endif
     </style>
 </head>
 <body>
