@@ -8,7 +8,7 @@
     @endif
 </div>
 <div class="toolbar">
-    <form class="filter-panel" method="get">
+    <form class="filter-panel js-ajax-table-filter" method="get">
         @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari surat keluar</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari penerima, nomor surat, atau perihal"></label>
@@ -27,7 +27,7 @@
                 <label class="filter-field"><span>Status surat</span><select class="select" name="status">
                     <option value="">Semua status</option>
                     @foreach(['draft', 'menunggu_verifikasi', 'perlu_revisi', 'menunggu_persetujuan_kepsek', 'perlu_revisi_kepsek', 'siap_dicetak', 'selesai'] as $status)
-                        <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst(str_replace('_', ' ', $status)) }}</option>
+                        <option value="{{ $status }}" @selected(request('status') === $status)>{{ $status === 'perlu_revisi_kepsek' ? 'Dikembalikan Kepsek untuk diperbaiki' : ucfirst(str_replace('_', ' ', $status)) }}</option>
                     @endforeach
                 </select></label>
                 <label class="filter-field"><span>Tahun surat</span><select class="select" name="year"><option value="">Semua tahun</option>@foreach($years as $year)<option value="{{ $year }}" @selected((string) request('year') === (string) $year)>{{ $year }}</option>@endforeach</select></label>
@@ -37,8 +37,9 @@
     </form>
 </div>
 <div class="table-card">
-    <div class="table-scroll">
-        <table>
+    <div class="table-scroll outgoing-table-scroll">
+        <table class="outgoing-list-table">
+            <colgroup><col style="width:14%"><col style="width:8%"><col style="width:8%"><col style="width:19%"><col style="width:18%"><col style="width:12%"><col style="width:16%"><col style="width:5%"></colgroup>
             <thead><tr><x-sortable-th column="agenda_number" label="No. agenda" /><x-sortable-th column="type" label="Jenis" /><x-sortable-th column="letter_date" label="Tanggal" /><x-sortable-th column="recipient_name" label="Tujuan" /><x-sortable-th column="subject" label="Perihal" /><x-sortable-th column="created_by" label="Pembuat" /><x-sortable-th column="status" label="Status" /><th></th></tr></thead>
             <tbody>
                 @forelse($letters as $letter)
@@ -49,8 +50,8 @@
                         <td>{{ $letter->recipient_name }}</td>
                         <td>{{ $letter->subject }}</td>
                         <td>{{ $letter->creator?->name }}</td>
-                        <td><span class="status status-{{ $letter->status }}">{{ str_replace('_', ' ', $letter->status) }}</span></td>
-                        <td><div class="row-actions"><a class="table-action" href="{{ route('outgoing.show', $letter) }}">Buka</a></div></td>
+                        <td><span class="status status-{{ $letter->status }}">{{ $letter->statusLabel() }}</span></td>
+                        <td><div class="row-actions"><a class="table-action" href="{{ route('outgoing.show', $letter) }}" data-detail-modal data-outgoing-detail-modal>Buka</a></div></td>
                     </tr>
                 @empty
                     <tr><td colspan="8"><div class="empty-state">Belum ada surat keluar untuk filter ini.</div></td></tr>

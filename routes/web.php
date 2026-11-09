@@ -37,21 +37,24 @@ Route::middleware('auth')->group(function (): void {
     Route::middleware('role:tu')->group(function (): void {
         Route::get('/incoming/create', [IncomingLetterController::class, 'create'])->name('incoming.create');
         Route::post('/incoming', [IncomingLetterController::class, 'store'])->name('incoming.store');
-        Route::get('/incoming/{incoming}/edit', [IncomingLetterController::class, 'edit'])->name('incoming.edit');
-        Route::put('/incoming/{incoming}', [IncomingLetterController::class, 'update'])->name('incoming.update');
         Route::get('/outgoing/create', [OutgoingLetterController::class, 'create'])->name('outgoing.create');
         Route::get('/outgoing/create/{type}', [OutgoingLetterController::class, 'createType'])->name('outgoing.create.type');
         Route::post('/outgoing', [OutgoingLetterController::class, 'store'])->name('outgoing.store');
+    });
+    Route::middleware('role:tu,kepala_tu')->group(function (): void {
+        Route::get('/incoming/{incoming}/edit', [IncomingLetterController::class, 'edit'])->name('incoming.edit');
+        Route::put('/incoming/{incoming}', [IncomingLetterController::class, 'update'])->name('incoming.update');
         Route::get('/outgoing/{outgoing}/edit', [OutgoingLetterController::class, 'edit'])->name('outgoing.edit');
         Route::put('/outgoing/{outgoing}', [OutgoingLetterController::class, 'update'])->name('outgoing.update');
+        Route::post('/outgoing/{outgoing}/submit', [OutgoingLetterController::class, 'submitForVerification'])->name('outgoing.submit');
+        Route::post('/outgoing/{outgoing}/complete', [OutgoingLetterController::class, 'complete'])->name('outgoing.complete');
     });
     Route::middleware('role:tu,kepala_tu,kepsek')->group(function (): void {
         Route::get('/incoming', [IncomingLetterController::class, 'index'])->name('incoming.index');
         Route::get('/incoming/{incoming}/disposition/print', [DispositionController::class, 'printIncoming'])->name('incoming.disposition.print');
+        Route::get('/incoming/{incoming}/preview', [IncomingLetterController::class, 'preview'])->name('incoming.preview');
         Route::get('/incoming/{incoming}', [IncomingLetterController::class, 'show'])->name('incoming.show');
-        Route::get('/incoming/{incoming}/disposition/edit', [DispositionController::class, 'editIncoming'])->middleware('role:kepsek')->name('incoming.disposition.edit');
-        Route::put('/incoming/{incoming}/disposition', [DispositionController::class, 'updateIncoming'])->middleware('role:kepsek')->name('incoming.disposition.update');
-        Route::post('/incoming/{incoming}/follow-up-confirmation', [DispositionController::class, 'confirmIncomingFollowUp'])->middleware('role:tu')->name('incoming.follow_up.confirm');
+        Route::post('/incoming/{incoming}/follow-up-confirmation', [DispositionController::class, 'confirmIncomingFollowUp'])->middleware('role:tu,kepala_tu')->name('incoming.follow_up.confirm');
     });
     Route::delete('/incoming/{incoming}', [IncomingLetterController::class, 'destroy'])->middleware('role:kepala_tu')->name('incoming.destroy');
     Route::middleware('role:tu,kepala_tu,kepsek')->group(function (): void {
@@ -62,8 +65,8 @@ Route::middleware('auth')->group(function (): void {
     });
     Route::delete('/outgoing/{outgoing}', [OutgoingLetterController::class, 'destroy'])->middleware('role:tu,kepala_tu')->name('outgoing.destroy');
     Route::post('/outgoing/{outgoing}/verify', [OutgoingLetterController::class, 'verify'])->middleware('role:kepala_tu')->name('outgoing.verify');
-    Route::post('/outgoing/{outgoing}/principal-review', [OutgoingLetterController::class, 'principalReview'])->middleware('role:kepsek')->name('outgoing.principal_review');
-    Route::post('/incoming/{incoming}/disposition', [DispositionController::class, 'incoming'])->middleware('role:kepsek')->name('incoming.disposition');
+    Route::post('/outgoing/{outgoing}/principal-review', [OutgoingLetterController::class, 'principalReview'])->middleware('role:kepsek,kepala_tu')->name('outgoing.principal_review');
+    Route::post('/incoming/{incoming}/disposition', [DispositionController::class, 'incoming'])->middleware('role:kepsek,kepala_tu')->name('incoming.disposition');
     Route::middleware('role:humas,kepala_tu')->group(function (): void {
         Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
         Route::get('/students/template', [StudentController::class, 'template'])->name('students.template');

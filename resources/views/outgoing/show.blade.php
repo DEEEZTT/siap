@@ -1,8 +1,14 @@
 @extends('layouts.app')
 @section('title', 'Rincian surat keluar')
 @section('content')
+@php
+    $recipientDisplay = $outgoing->type === 'perintah_tugas'
+        ? collect($outgoing->details['recipients'] ?? [])->pluck('name')->filter()->implode(', ')
+        : '';
+    $recipientDisplay = $recipientDisplay ?: $outgoing->recipient_name;
+@endphp
 <div class="page-heading outgoing-page-heading">
-    <div><span class="eyebrow blue">{{ $outgoing->agenda_number ?? 'SURAT KELUAR' }}</span><h1>{{ $outgoing->subject }}</h1><p>Surat untuk {{ $outgoing->recipient_name }}</p></div>
+    <div><span class="eyebrow blue">{{ $outgoing->agenda_number ?? 'SURAT KELUAR' }}</span><h1>{{ $outgoing->subject }}</h1><p>Surat untuk {{ $recipientDisplay }}</p></div>
     <a class="button button-light" href="{{ route('outgoing.index') }}">← Kembali ke agenda</a>
 </div>
 <div class="detail-grid record-detail-grid">
@@ -13,7 +19,7 @@
             <dt>Jenis surat</dt><dd>{{ str_replace('_', ' ', $outgoing->type) }}</dd>
             <dt>Nomor agenda</dt><dd>{{ $outgoing->agenda_number ?? 'Belum diberikan' }}</dd>
             <dt>Nomor surat</dt><dd>{{ $outgoing->letter_number ?? 'Menunggu verifikasi' }}</dd>
-            <dt>Tujuan</dt><dd>{{ $outgoing->recipient_name }}</dd>
+            <dt>Tujuan</dt><dd>{{ $recipientDisplay }}</dd>
             <dt>Alamat</dt><dd>{{ $outgoing->recipient_address ?: '—' }}</dd>
             <dt>Perihal</dt><dd>{{ $outgoing->subject }}</dd>
             @if($outgoing->type === 'undangan')
@@ -25,6 +31,9 @@
                 <dt>NIP / NUPTK</dt><dd>{{ $outgoing->details['employee_number'] ?? '—' }}</dd>
                 <dt>Jabatan</dt><dd>{{ $outgoing->details['position'] ?? '—' }}</dd>
                 <dt>Rincian tugas</dt><dd class="preserve-lines">{{ $outgoing->details['assignment'] ?? '—' }}</dd>
+                @if(!empty($outgoing->details['participants']))
+                    <dt>Daftar peserta</dt><dd class="preserve-lines">@foreach($outgoing->details['participants'] as $participant){{ $loop->iteration }}. {{ $participant['name'] }}{{ !empty($participant['class']) ? ' — '.$participant['class'] : '' }}@if(!$loop->last){{ "\n" }}@endif @endforeach</dd>
+                @endif
             @else
                 <dt>NISN</dt><dd>{{ $outgoing->details['nisn'] ?? '—' }}</dd>
                 <dt>Sekolah asal</dt><dd>{{ $outgoing->details['origin_school'] ?? '—' }}</dd>
@@ -38,7 +47,7 @@
                 @endif
             @endif
             <dt>Keterangan</dt><dd>{{ $outgoing->notes ?: '—' }}</dd>
-            <dt>Status</dt><dd><span class="status status-{{ $outgoing->status }}">{{ str_replace('_', ' ', $outgoing->status) }}</span></dd>
+            <dt>Status</dt><dd><span class="status status-{{ $outgoing->status }}">{{ $outgoing->statusLabel() }}</span></dd>
             @if($outgoing->verification_note)
                 <dt>Catatan Kepala TU</dt><dd>{{ $outgoing->verification_note }}</dd>
             @endif
@@ -50,7 +59,13 @@
             @endif
         </dl>
         <div class="document-actions">
-            <a class="button" href="{{ route('outgoing.print', $outgoing) }}">Pratinjau / cetak / simpan PDF</a>
+            <a class="button" href="{{ route('outgoing.print', $outgoing) }}" data-outgoing-document-preview>Pratinjau / cetak / simpan PDF</a>
+            @if($outgoing->status === 'siap_dicetak' && in_array(auth()->user()->role, ['tu', 'kepala_tu'], true))
+                <form method="post" action="{{ route('outgoing.complete', $outgoing) }}" onsubmit="return confirm('Tandai surat ini selesai dicetak atau dikirim?')">
+                    @csrf
+                    <button class="button" type="submit">Tandai selesai</button>
+                </form>
+            @endif
             @if($outgoing->disposition)
                 <a class="button button-light" href="{{ route('outgoing.disposition.print', $outgoing) }}">Cetak disposisi lama</a>
             @endif
@@ -58,13 +73,13 @@
                 <a class="button button-light" href="{{ route('outgoing.edit', $outgoing) }}">Ubah surat</a>
             @endif
         </div>
-        @if(in_array($outgoing->status, ['draft', 'perlu_revisi', 'perlu_revisi_kepsek', 'selesai'], true) && in_array(auth()->user()->role, ['tu', 'kepala_tu'], true) && (auth()->user()->role === 'kepala_tu' || $outgoing->created_by === auth()->id()))
+        @if(in_array($outgoing->status, ['draft', 'menunggu_verifikasi', 'perlu_revisi', 'perlu_revisi_kepsek', 'selesai'], true) && in_array(auth()->user()->role, ['tu', 'kepala_tu'], true) && (auth()->user()->role === 'kepala_tu' || $outgoing->created_by === auth()->id()))
             <div class="danger-zone">
-                <p class="field-hint">Penghapusan surat selesai bersifat permanen dan lampiran terkait ikut dihapus.</p>
+                <p class="field-hint">Penghapusan surat bersifat permanen dan lampiran terkait ikut dihapus.</p>
                 <form method="post" action="{{ route('outgoing.destroy', $outgoing) }}" onsubmit="return confirm('Hapus surat keluar ini? Tindakan ini tidak bisa dibatalkan.')">
                     @csrf
                     @method('delete')
-                    <button class="button button-danger" type="submit">{{ $outgoing->status === 'selesai' ? 'Hapus surat selesai' : 'Hapus draft surat' }}</button>
+                    <button class="button button-danger" type="submit">{{ $outgoing->status === 'selesai' ? 'Hapus surat selesai' : ($outgoing->status === 'draft' ? 'Hapus draft surat' : 'Hapus surat') }}</button>
                 </form>
             </div>
         @endif
@@ -79,8 +94,8 @@
                 <div class="field"><label for="verification-note">Catatan untuk TU (wajib jika revisi)</label><textarea class="textarea" id="verification-note" name="verification_note">{{ old('verification_note') }}</textarea></div>
                 <div class="form-actions"><button class="button button-danger" name="decision" value="revisi">Minta revisi</button><button class="button" name="decision" value="setuju">Lanjutkan ke Kepsek</button></div>
             </form>
-        @elseif($outgoing->status === 'menunggu_persetujuan_kepsek' && auth()->user()->role === 'kepsek')
-            <h2>Persetujuan Kepala Sekolah</h2>
+        @elseif($outgoing->status === 'menunggu_persetujuan_kepsek' && in_array(auth()->user()->role, ['kepsek', 'kepala_tu'], true))
+            <h2>Persetujuan Kepala Sekolah / Kepala TU</h2>
             <p class="muted">Periksa isi surat. Setelah disetujui, surat dapat dicetak.</p>
             <form method="post" action="{{ route('outgoing.principal_review', $outgoing) }}">
                 @csrf
@@ -88,12 +103,16 @@
                 <div class="form-actions"><button class="button button-danger" name="decision" value="revisi">Minta revisi</button><button class="button" name="decision" value="setuju">Setujui dan siapkan cetak</button></div>
             </form>
         @elseif(in_array($outgoing->status, ['perlu_revisi', 'perlu_revisi_kepsek'], true))
-            <h2>Perlu revisi</h2>
-            <p class="muted">Surat dikembalikan ke Tata Usaha. Perbaiki catatan yang diberikan, lalu kirim kembali untuk verifikasi.</p>
+            <h2>{{ $outgoing->status === 'perlu_revisi_kepsek' ? 'Dikembalikan Kepala Sekolah' : 'Perlu revisi' }}</h2>
+            <p class="muted">Surat dikembalikan ke Tata Usaha. Perbaiki sesuai catatan yang diberikan, lalu kirim kembali untuk verifikasi.</p>
         @elseif($outgoing->status === 'menunggu_verifikasi')
             <h2>Proses surat</h2><p class="muted">Menunggu pemeriksaan Kepala TU.</p>
         @elseif($outgoing->status === 'menunggu_persetujuan_kepsek')
             <h2>Proses surat</h2><p class="muted">Menunggu keputusan Kepala Sekolah.</p>
+        @elseif($outgoing->status === 'siap_dicetak')
+            <h2>Surat siap dicetak</h2><p class="muted">Setelah dicetak atau dikirim, tandai surat sebagai selesai.</p>
+        @elseif($outgoing->status === 'selesai')
+            <h2>Surat selesai</h2><p class="muted">Surat telah dicetak atau dikirim.</p>
         @elseif($outgoing->disposition)
             <h2>Disposisi lama</h2>
             <dl class="detail-list"><dt>Diteruskan kepada</dt><dd>{{ implode(', ', $outgoing->disposition->recipients ?? []) }}</dd><dt>Instruksi</dt><dd>{{ implode(', ', $outgoing->disposition->instructions ?? []) }} {{ $outgoing->disposition->other_instruction }}</dd><dt>Catatan</dt><dd>{{ $outgoing->disposition->note ?: '—' }}</dd></dl>

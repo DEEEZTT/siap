@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Disposition;
 use App\Models\IncomingLetter;
 use App\Models\OutgoingLetter;
+use App\Support\UploadedDocument;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,47 +58,7 @@ class DispositionController extends Controller
         return back()->with('success', 'Disposisi tersimpan. Menunggu konfirmasi tindak lanjut dari Tata Usaha.');
     }
 
-    public function editIncoming(IncomingLetter $incoming): View
-    {
-        abort_unless(in_array($incoming->status, ['menunggu_konfirmasi_tu', 'selesai'], true), 409, 'Disposisi belum tersedia untuk diubah.');
-
-        $incoming->load('disposition');
-        abort_unless($incoming->disposition, 404);
-
-        return view('dispositions.edit', compact('incoming'));
-    }
-
-    public function updateIncoming(Request $request, IncomingLetter $incoming): RedirectResponse
-    {
-        $data = $this->validated($request);
-        $storedPath = null;
-        $oldPath = null;
-
-        try {
-            DB::transaction(function () use ($request, $data, $incoming, &$storedPath, &$oldPath): void {
-                $lockedIncoming = IncomingLetter::query()->whereKey($incoming->getKey())->lockForUpdate()->firstOrFail();
-                abort_unless(in_array($lockedIncoming->status, ['menunggu_konfirmasi_tu', 'selesai'], true), 409, 'Status surat tidak mengizinkan perubahan disposisi.');
-
-                $disposition = $lockedIncoming->disposition()->firstOrFail();
-                $this->saveIncomingDisposition($request, $lockedIncoming, $data, $storedPath, $disposition, $oldPath);
-                $lockedIncoming->update(['status' => 'menunggu_konfirmasi_tu']);
-            });
-        } catch (Throwable $exception) {
-            if ($storedPath) {
-                Storage::disk('local')->delete($storedPath);
-            }
-
-            throw $exception;
-        }
-
-        if ($storedPath && $oldPath) {
-            Storage::disk('local')->delete($oldPath);
-        }
-
-        return redirect()->route('incoming.show', $incoming)->with('success', 'Disposisi diperbarui. Tata Usaha perlu mengonfirmasi tindak lanjut kembali.');
-    }
-
-    public function confirmIncomingFollowUp(Request $request, IncomingLetter $incoming): RedirectResponse
+    public function confirmIncomingFollowUp(Request $request, IncomingLetter $incoming): RedirectResponse|JsonResponse
     {
         $data = $request->validate(['confirmation_note' => ['nullable', 'string', 'max:2000']]);
 
@@ -119,7 +81,11 @@ class DispositionController extends Controller
             $disposition->save();
         });
 
-        return back()->with('success', 'Tindak lanjut surat dikonfirmasi dan status surat menjadi selesai.');
+        $message = 'Tindak lanjut surat dikonfirmasi dan status surat menjadi selesai.';
+
+        return $request->expectsJson()
+            ? response()->json(['message' => $message, 'status' => 'selesai'])
+            : back()->with('success', $message);
     }
 
     public function printIncoming(IncomingLetter $incoming): View
@@ -159,13 +125,23 @@ class DispositionController extends Controller
     private function validated(Request $request): array
     {
         return $request->validate([
-            'recipients' => ['nullable', 'array', 'max:8'],
+            'recipients' => ['nullable', 'array', 'min:1', 'max:8', 'required_without:other_recipient'],
             'recipients.*' => ['string', Rule::in(self::RECIPIENTS)],
-            'other_recipient' => ['nullable', 'string', 'max:190'],
-            'instruction' => ['nullable', 'string', Rule::in([...self::INSTRUCTIONS, 'lainnya'])],
+            'other_recipient' => ['nullable', 'required_without:recipients', 'string', 'max:190'],
+            'instruction' => ['required', 'string', Rule::in([...self::INSTRUCTIONS, 'lainnya'])],
             'other_instruction' => ['nullable', 'required_if:instruction,lainnya', 'string', 'max:190'],
             'note' => ['nullable', 'string', 'max:3000'],
-            'attachment' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'attachment' => ['nullable', 'file', 'max:10240', function ($attribute, $file, $fail): void {
+                if (! UploadedDocument::extension($file)) {
+                    $fail('File harus berupa PDF, JPG, JPEG, atau PNG yang valid.');
+                }
+            }],
+        ], [
+            'recipients.required_without' => 'Pilih minimal satu penerima atau isi penerima lainnya.',
+            'recipients.min' => 'Pilih minimal satu penerima.',
+            'other_recipient.required_without' => 'Pilih minimal satu penerima atau isi penerima lainnya.',
+            'instruction.required' => 'Pilih arahan disposisi terlebih dahulu.',
+            'other_instruction.required_if' => 'Isi arahan disposisi lainnya.',
         ]);
     }
 
@@ -177,16 +153,12 @@ class DispositionController extends Controller
         IncomingLetter $incoming,
         array $data,
         ?string &$storedPath,
-        ?Disposition $disposition = null,
-        ?string &$oldPath = null,
     ): void {
-        $disposition ??= $incoming->disposition()->firstOrNew();
-        $isNew = ! $disposition->exists;
-        $before = $isNew ? null : $this->dispositionSnapshot($disposition);
-        $oldPath = $disposition->attachment_path;
+        $disposition = $incoming->disposition()->firstOrNew();
+        abort_if($disposition->exists, 409, 'Disposisi sudah dibuat dan tidak dapat diubah.');
 
         if ($request->hasFile('attachment')) {
-            $newAttachmentPath = $request->file('attachment')->store('dispositions', 'local');
+            $newAttachmentPath = UploadedDocument::store($request->file('attachment'), 'dispositions');
             abort_if($newAttachmentPath === false, 500, 'Lampiran disposisi gagal disimpan.');
             $storedPath = $newAttachmentPath;
             $disposition->attachment_path = $storedPath;
@@ -207,7 +179,7 @@ class DispositionController extends Controller
 
         $after = $this->dispositionSnapshot($disposition);
         $disposition->save();
-        $this->appendHistory($disposition, $request, $isNew ? 'disposisi_dibuat' : 'disposisi_diubah', $before, $after);
+        $this->appendHistory($disposition, $request, 'disposisi_dibuat', null, $after);
         $disposition->save();
     }
 

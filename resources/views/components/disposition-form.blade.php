@@ -3,7 +3,7 @@
     $selectedInstruction = old('instruction', $disposition?->other_instruction ? 'lainnya' : ($disposition?->instructions[0] ?? ''));
 @endphp
 <div class="field">
-    <label>Diteruskan kepada Sdr.</label>
+    <label>Diteruskan kepada Sdr. <span class="required">*</span></label>
     <div class="check-grid checkbox-list">
         @foreach(['Waka Kurikulum', 'Waka Kesiswaan', 'Waka Sarpras', 'Waka Humas', 'Pembina OSIS', 'Koordinator TU', 'Bendahara Sekolah/BOS', 'Bendahara SPP'] as $recipient)
             <label class="check-item"><input type="checkbox" name="recipients[]" value="{{ $recipient }}" @checked(in_array($recipient, $selectedRecipients, true))> {{ $recipient }}</label>
@@ -12,10 +12,10 @@
     <input class="input" style="margin-top:8px" name="other_recipient" maxlength="190" value="{{ old('other_recipient', $disposition?->other_recipient) }}" placeholder="Sdr. lainnya (opsional)">
 </div>
 <div class="field" style="margin-top:14px">
-    <label>Dengan hormat harap</label>
+    <label>Dengan hormat harap <span class="required">*</span></label>
     <div class="disposition-radio-list">
         @foreach(['Tanggapan dan saran', 'Proses lebih lanjut', 'Koordinasi/konfirmasi'] as $instruction)
-            <label class="disposition-radio-item"><input type="radio" name="instruction" value="{{ $instruction }}" @checked($selectedInstruction === $instruction)> {{ $instruction }}</label>
+            <label class="disposition-radio-item"><input type="radio" name="instruction" value="{{ $instruction }}" @if($loop->first) required @endif @checked($selectedInstruction === $instruction)> {{ $instruction }}</label>
         @endforeach
         <div class="disposition-custom-instruction">
             <label class="disposition-radio-item"><input type="radio" name="instruction" value="lainnya" @checked($selectedInstruction === 'lainnya')> Lainnya</label>

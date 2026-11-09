@@ -30,23 +30,23 @@ class ReportAndCertificateTest extends TestCase
         $this->actingAs($humas)->get(route('reports.export', 'agreements'))->assertOk()->assertDownload();
     }
 
-    public function test_tata_usaha_can_issue_certificates_for_several_recipients_with_sequential_numbers(): void
+    public function test_tata_usaha_can_issue_certificates_sequentially_for_multiple_recipients(): void
     {
         $tu = User::factory()->create(['role' => 'tu']);
-        $this->actingAs($tu)->post(route('event-certificates.store'), [
+        $certificateData = [
             'category' => 'penghargaan',
             'title' => 'Sertifikat Penghargaan',
             'description' => 'Sebagai Juara 1 Lomba Kompetensi Siswa.',
             'issued_at' => '2026-09-15',
             'signer_name' => 'Pembina OSIS',
             'signer_title' => 'Pembina',
-            'recipients' => "Ahmad Fauzi | XII RPL 3\nSiti Aisyah\nAhmad Fauzi | XII RPL 3",
-        ])->assertRedirect(route('event-certificates.index'));
+        ];
+        $this->actingAs($tu)->post(route('event-certificates.store'), [...$certificateData, 'recipient_name' => 'Ahmad Fauzi'])->assertRedirect(route('event-certificates.index'));
+        $this->actingAs($tu)->post(route('event-certificates.store'), [...$certificateData, 'recipient_name' => 'Siti Aisyah'])->assertRedirect(route('event-certificates.index'));
 
         $this->assertDatabaseCount('certificates', 2);
         $this->assertSame(['SRT/2026/0001', 'SRT/2026/0002'], Certificate::query()->orderBy('id')->pluck('certificate_number')->all());
         $first = Certificate::query()->orderBy('id')->firstOrFail();
-        $this->assertSame('XII RPL 3', $first->recipient_detail);
         $this->actingAs($tu)->get(route('event-certificates.show', $first))->assertOk()->assertSee('AHMAD FAUZI')->assertSee('SRT/2026/0001');
         $this->actingAs($tu)->get(route('event-certificates.print_all'))->assertOk()->assertSee('SITI AISYAH');
         $this->assertDatabaseHas('activity_logs', ['action' => 'sertifikat_kegiatan_terbit']);

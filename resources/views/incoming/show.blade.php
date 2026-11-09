@@ -26,15 +26,15 @@
         </dl>
         <div class="document-actions">
             @if($incoming->file_path)
-                <a class="button button-light" href="{{ route('documents.show', ['type' => 'incoming', 'id' => $incoming->id]) }}">Lihat berkas</a>
-                <a class="button button-light" href="{{ route('documents.show', ['type' => 'incoming', 'id' => $incoming->id, 'download' => 1]) }}">Unduh</a>
+                <a class="button button-light" href="{{ route('documents.show', ['type' => 'incoming', 'id' => $incoming->id]) }}" target="_blank" rel="noopener">Lihat berkas</a>
+                <a class="button button-light" href="{{ route('documents.show', ['type' => 'incoming', 'id' => $incoming->id, 'download' => 1]) }}" target="_blank" rel="noopener">Unduh</a>
             @else
                 <span class="field-hint">Tidak ada berkas; surat dicatat manual.</span>
             @endif
             @if($incoming->disposition)
-                <a class="button button-light" href="{{ route('incoming.disposition.print', $incoming) }}">Cetak lembar disposisi</a>
+                <a class="button button-light js-print-disposition" href="{{ route('incoming.disposition.print', $incoming) }}">Cetak lembar disposisi</a>
                 @if($incoming->disposition->attachment_path)
-                    <a class="button button-light" href="{{ route('documents.show', ['type' => 'disposition', 'id' => $incoming->disposition->id]) }}">Lihat lampiran disposisi</a>
+                    <a class="button button-light" href="{{ route('documents.show', ['type' => 'disposition', 'id' => $incoming->disposition->id]) }}" target="_blank" rel="noopener">Lihat lampiran disposisi</a>
                 @endif
             @endif
             @if(in_array(auth()->user()->role, ['tu', 'kepala_tu'], true) && $incoming->status === 'menunggu_disposisi')
@@ -68,18 +68,10 @@
                 @endif
             </dl>
 
-            @if($canManageDisposition)
-                <div class="document-actions"><a class="button button-light" href="{{ route('incoming.disposition.edit', $incoming) }}">Ubah disposisi</a></div>
-            @endif
-
             @if($canConfirmFollowUp && $incoming->status === 'menunggu_konfirmasi_tu')
                 <form class="disposition-form follow-up-confirmation" method="post" action="{{ route('incoming.follow_up.confirm', $incoming) }}">
                     @csrf
-                    <div class="field">
-                        <label for="confirmation-note">Catatan tindak lanjut (opsional)</label>
-                        <textarea class="textarea" id="confirmation-note" name="confirmation_note" placeholder="Contoh: disposisi sudah diteruskan kepada Waka Humas"></textarea>
-                    </div>
-                    <button class="button" type="submit">Konfirmasi tindak lanjut</button>
+                    <button class="button" type="submit">Disposisi selesai</button>
                 </form>
             @endif
 
@@ -105,7 +97,7 @@
             @endif
         @elseif($canManageDisposition && $incoming->status === 'menunggu_disposisi')
             <p class="muted">Isi arahan yang akan diteruskan. Tata Usaha mengonfirmasi tindak lanjut setelah disposisi disimpan.</p>
-            <form method="post" enctype="multipart/form-data" action="{{ route('incoming.disposition', $incoming) }}" class="disposition-form">
+            <form method="post" enctype="multipart/form-data" action="{{ route('incoming.disposition', $incoming) }}" data-disposition-required class="disposition-form">
                 @csrf
                 @include('components.disposition-form', ['disposition' => null])
                 <button class="button" style="margin-top:15px">Simpan disposisi</button>

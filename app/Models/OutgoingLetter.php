@@ -15,6 +15,13 @@ class OutgoingLetter extends Model
         return ['letter_date' => 'date', 'event_date' => 'date', 'details' => 'array', 'verified_at' => 'datetime', 'kepsek_reviewed_at' => 'datetime'];
     }
 
+    public function statusLabel(): string
+    {
+        return $this->status === 'perlu_revisi_kepsek'
+            ? 'Dikembalikan Kepsek untuk diperbaiki'
+            : ucfirst(str_replace('_', ' ', $this->status));
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

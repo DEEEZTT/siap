@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Carbon\CarbonInterface;
 
 #[Fillable(['name', 'partnership_type', 'agreement_type', 'document_number', 'scope', 'valid_from', 'valid_until', 'address', 'contact_person', 'phone', 'email', 'status', 'notes', 'mou_document_path'])]
 class Company extends Model
@@ -51,6 +52,29 @@ class Company extends Model
         }
 
         return $today->diffInDays($this->valid_until, false) <= self::EXPIRING_WITHIN_DAYS ? 'segera_berakhir' : 'berlaku';
+    }
+
+    public function agreementStatusAt(CarbonInterface $date): ?string
+    {
+        if (! $this->isFormalAgreement()) {
+            return null;
+        }
+
+        if (! $this->valid_from || ! $this->valid_until) {
+            return 'belum_lengkap';
+        }
+
+        $asOf = \Carbon\CarbonImmutable::instance($date)->startOfDay();
+
+        if ($this->valid_until->lt($asOf)) {
+            return 'kedaluwarsa';
+        }
+
+        if ($this->valid_from->gt($asOf)) {
+            return 'belum_berlaku';
+        }
+
+        return $asOf->diffInDays($this->valid_until, false) <= self::EXPIRING_WITHIN_DAYS ? 'segera_berakhir' : 'berlaku';
     }
 
     public static function agreementStatusLabels(): array

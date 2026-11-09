@@ -1,5 +1,5 @@
 <div class="certificate-preview">
-    <article class="certificate">
+    <article class="certificate certificate-category-{{ $certificate->category }}">
         <div class="certificate-inner">
             <img class="certificate-watermark" src="{{ asset('images/tutwuri.png') }}" alt="" aria-hidden="true">
             <div class="certificate-logos">
@@ -7,7 +7,8 @@
                 <img src="{{ asset('images/smkn4.png') }}" alt="Lambang SMKN 4 Tanjungpinang">
             </div>
 
-            <h2 class="certificate-title event-certificate-title">{{ $certificate->title }}</h2>
+            <h2 class="certificate-title event-certificate-title">{{ $certificate->displayTitle() }}</h2>
+            <p class="certificate-type-label">{{ \App\Models\Certificate::CATEGORIES[$certificate->category] ?? 'Sertifikat kegiatan' }}</p>
             <p class="cert-number">Nomor: {{ $certificate->certificate_number }}</p>
             <p class="cert-label">Diberikan Kepada</p>
             <p class="student-name event-certificate-name">{{ strtoupper($certificate->recipient_name) }}</p>

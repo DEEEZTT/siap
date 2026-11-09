@@ -2,26 +2,27 @@
 @section('title', isset($company) ? 'Ubah mitra' : 'Tambah mitra perusahaan')
 @section('content')
 <div class="page-heading"><div><span class="eyebrow blue">HUMAS · KERJA SAMA</span><h1>{{ isset($company) ? 'Ubah data mitra' : 'Tambah perusahaan mitra' }}</h1><p>Catat informasi kerja sama dan narahubung perusahaan.</p></div></div>
-<form class="form-card" method="post" enctype="multipart/form-data" action="{{ isset($company) ? route('companies.update', $company) : route('companies.store') }}">
+@php($showAgreementFields = old('partnership_type', $company->partnership_type ?? '') === 'mou')
+<form class="form-card company-page-form" method="post" enctype="multipart/form-data" action="{{ isset($company) ? route('companies.update', $company) : route('companies.store') }}">
     @csrf
     @if(isset($company))@method('put')@endif
     <div class="form-grid">
         <div class="field"><label for="company-name">Nama perusahaan <span class="required">*</span></label><input class="input" id="company-name" name="name" value="{{ old('name', $company->name ?? '') }}" required></div>
-        <div class="field"><label for="partnership-type">Jenis kemitraan <span class="required">*</span></label><select class="select" id="partnership-type" name="partnership_type" required><option value="">Pilih jenis mitra</option><option value="mou" @selected(old('partnership_type', $company->partnership_type ?? '') === 'mou')>Mitra resmi dengan MoU/PKS</option><option value="pkl_only" @selected(old('partnership_type', $company->partnership_type ?? '') === 'pkl_only')>Mitra PKL saja (tanpa MoU/PKS)</option></select><span class="field-hint">Data lama yang belum dipastikan akan tetap berstatus belum diklasifikasikan sampai diubah di sini.</span></div>
-        <div class="field" data-agreement-field><label for="agreement-type">Jenis dokumen <span class="required">*</span></label><select class="select" id="agreement-type" name="agreement_type"><option value="">Pilih MoU atau PKS</option><option value="mou" @selected(old('agreement_type', $company->agreement_type ?? '') === 'mou')>MoU (Nota Kesepahaman)</option><option value="pks" @selected(old('agreement_type', $company->agreement_type ?? '') === 'pks')>PKS (Perjanjian Kerja Sama)</option></select></div>
-        <div class="field" data-agreement-field><label for="document-number">Nomor dokumen <span class="required">*</span></label><input class="input" id="document-number" name="document_number" maxlength="120" value="{{ old('document_number', $company->document_number ?? '') }}"></div>
-        <div class="field" data-agreement-field><label for="valid-from">Berlaku mulai <span class="required">*</span></label><input class="input" id="valid-from" type="date" name="valid_from" value="{{ old('valid_from', isset($company) ? $company->valid_from?->format('Y-m-d') : '') }}"></div>
-        <div class="field" data-agreement-field><label for="valid-until">Berakhir pada <span class="required">*</span></label><input class="input" id="valid-until" type="date" name="valid_until" value="{{ old('valid_until', isset($company) ? $company->valid_until?->format('Y-m-d') : '') }}"></div>
-        <div class="field full" data-agreement-field><label for="agreement-scope">Ruang lingkup kerja sama <span class="required">*</span></label><textarea class="textarea" id="agreement-scope" name="scope" maxlength="2000">{{ old('scope', $company->scope ?? '') }}</textarea></div>
-        <div class="field full mou-upload-field" data-mou-upload @if(old('partnership_type', $company->partnership_type ?? '') !== 'mou') hidden @endif>
+        <div class="field"><label for="partnership-type">Jenis kemitraan <span class="required">*</span></label><select class="select" id="partnership-type" name="partnership_type" required><option value="">Pilih jenis mitra</option><option value="mou" @selected(old('partnership_type', $company->partnership_type ?? '') === 'mou')>Mitra resmi dengan MoU/PKS</option><option value="pkl_only" @selected(old('partnership_type', $company->partnership_type ?? '') === 'pkl_only')>Mitra PKL saja (tanpa MoU/PKS)</option></select><span class="field-hint">Pilih MoU/PKS untuk mengisi rincian dokumen. Field tersebut tidak ditampilkan untuk mitra PKL tanpa MoU.</span></div>
+        <div class="field" data-agreement-field @unless($showAgreementFields) hidden @endunless><label for="agreement-type">Jenis dokumen <span class="required">*</span></label><select class="select" id="agreement-type" name="agreement_type" @unless($showAgreementFields) disabled @endunless><option value="">Pilih MoU atau PKS</option><option value="mou" @selected(old('agreement_type', $company->agreement_type ?? '') === 'mou')>MoU (Nota Kesepahaman)</option><option value="pks" @selected(old('agreement_type', $company->agreement_type ?? '') === 'pks')>PKS (Perjanjian Kerja Sama)</option></select></div>
+        <div class="field" data-agreement-field @unless($showAgreementFields) hidden @endunless><label for="document-number">Nomor dokumen <span class="required">*</span></label><input class="input" id="document-number" name="document_number" maxlength="120" value="{{ old('document_number', $company->document_number ?? '') }}" @unless($showAgreementFields) disabled @endunless></div>
+        <div class="field" data-agreement-field @unless($showAgreementFields) hidden @endunless><label for="valid-from">Berlaku mulai <span class="required">*</span></label><input class="input" id="valid-from" type="date" name="valid_from" value="{{ old('valid_from', isset($company) ? $company->valid_from?->format('Y-m-d') : '') }}" @unless($showAgreementFields) disabled @endunless></div>
+        <div class="field" data-agreement-field @unless($showAgreementFields) hidden @endunless><label for="valid-until">Berakhir pada <span class="required">*</span></label><input class="input" id="valid-until" type="date" name="valid_until" value="{{ old('valid_until', isset($company) ? $company->valid_until?->format('Y-m-d') : '') }}" @unless($showAgreementFields) disabled @endunless></div>
+        <div class="field full" data-agreement-field @unless($showAgreementFields) hidden @endunless><label for="agreement-scope">Ruang lingkup kerja sama <span class="required">*</span></label><textarea class="textarea" id="agreement-scope" name="scope" maxlength="2000" @unless($showAgreementFields) disabled @endunless>{{ old('scope', $company->scope ?? '') }}</textarea></div>
+        <div class="field full mou-upload-field" data-mou-upload @unless($showAgreementFields) hidden @endunless>
             <label for="mou-document">Arsip dokumen MoU/PKS (PDF, maksimal 10 MB)</label>
-            <input class="input" id="mou-document" type="file" name="mou_document" accept=".pdf,application/pdf">
+            <input class="input" id="mou-document" type="file" name="mou_document" accept=".pdf,application/pdf" @unless($showAgreementFields) disabled @endunless>
             <span class="field-hint">Berkas disimpan secara privat dan hanya dapat diunduh oleh pengguna Humas.</span>
         </div>
         @if(isset($company) && $company->mou_document_path)
-            <div class="field full">
+            <div class="field full" data-agreement-field @unless($showAgreementFields) hidden @endunless>
                 <span class="field-hint">PDF MOU saat ini: <a class="text-link" href="{{ route('companies.mou.download', $company) }}">Unduh dokumen</a></span>
-                <label class="mou-remove-option"><input type="checkbox" name="remove_mou_document" value="1" @checked(old('remove_mou_document'))> Hapus dokumen MOU saat menyimpan</label>
+                <label class="mou-remove-option"><input type="checkbox" name="remove_mou_document" value="1" @checked(old('remove_mou_document')) @unless($showAgreementFields) disabled @endunless> Hapus dokumen MOU saat menyimpan</label>
             </div>
         @endif
         <div class="field"><label for="company-status">Status kerja sama</label><select class="select" id="company-status" name="status"><option value="aktif" @selected(old('status', $company->status ?? 'aktif') === 'aktif')>Aktif</option><option value="tidak_aktif" @selected(old('status', $company->status ?? '') === 'tidak_aktif')>Tidak aktif</option></select></div>
@@ -36,7 +37,7 @@
 @if(isset($company) && !$company->students()->exists())
     <div class="danger-zone">
         <p class="field-hint">Hapus mitra hanya jika data ini memang tidak diperlukan.</p>
-        <form method="post" action="{{ route('companies.destroy', $company) }}" onsubmit="return confirm('Hapus mitra {{ $company->name }}? Tindakan ini tidak bisa dibatalkan.')">
+        <form class="company-delete-form" method="post" action="{{ route('companies.destroy', $company) }}" data-confirm="Hapus mitra {{ $company->name }}? Tindakan ini tidak bisa dibatalkan.">
             @csrf
             @method('delete')
             <button class="button button-danger" type="submit">Hapus mitra</button>

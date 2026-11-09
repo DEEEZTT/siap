@@ -91,17 +91,22 @@ class DashboardController extends Controller
                     ->limit(5)
                     ->get()
                 : collect(),
-            'agreementsExpiring' => $canSeePkl
-                ? Company::query()->where('partnership_type', 'mou')->where('status', 'aktif')
-                    ->whereNotNull('valid_until')
-                    ->whereDate('valid_until', '<=', now()->addDays(Company::EXPIRING_WITHIN_DAYS)->toDateString())
-                    ->orderBy('valid_until')->limit(5)->get()
-                : collect(),
             'agreementsExpiringCount' => $canSeePkl
                 ? Company::query()->where('partnership_type', 'mou')->where('status', 'aktif')
                     ->whereNotNull('valid_until')
                     ->whereDate('valid_until', '<=', now()->addDays(Company::EXPIRING_WITHIN_DAYS)->toDateString())->count()
                 : 0,
+            'agreementsAttention' => $canSeePkl
+                ? Company::query()->where('partnership_type', 'mou')->get()
+                    ->filter(fn (Company $company): bool => in_array($company->agreementStatus(), ['segera_berakhir', 'kedaluwarsa', 'belum_lengkap'], true))
+                    ->sortBy(fn (Company $company): int => match ($company->agreementStatus()) {
+                        'kedaluwarsa' => 0,
+                        'segera_berakhir' => 1,
+                        default => 2,
+                    })
+                    ->take(8)
+                    ->values()
+                : collect(),
             'recentStudents' => $canSeePkl ? Student::with('company')->latest()->limit(5)->get() : collect(),
         ]);
     }

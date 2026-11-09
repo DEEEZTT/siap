@@ -3,7 +3,7 @@
 @section('content')
 <div class="page-heading"><div><span class="eyebrow blue">PENGATURAN · KEAMANAN</span><h1>Jejak audit</h1><p>Riwayat perubahan penting: akun, verifikasi surat, sertifikat, dan penghapusan data.</p></div></div>
 <div class="toolbar">
-    <form class="filter-panel" method="get">@if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif<div class="filter-main">
+    <form class="filter-panel js-ajax-table-filter" method="get">@if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif<div class="filter-main">
         <label class="filter-search"><span class="sr-only">Cari aktivitas</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari uraian aktivitas"></label>
         <select class="select" name="action"><option value="">Semua aktivitas</option>@foreach($actions as $action)<option value="{{ $action }}" @selected(request('action') === $action)>{{ str_replace('_', ' ', $action) }}</option>@endforeach</select>
         <button class="button" type="submit">Cari data</button>

@@ -6,7 +6,7 @@
     @php
         $periodLabel = ($month ? $months[$month].' ' : 'Tahun ').$year;
         $exportQuery = array_filter(['year' => $year, 'month' => $month]);
-        $statusLabel = fn ($key) => ucfirst(str_replace('_', ' ', $key));
+        $statusLabel = fn ($key) => $key === 'perlu_revisi_kepsek' ? 'Dikembalikan Kepsek untuk diperbaiki' : ucfirst(str_replace('_', ' ', $key));
     @endphp
 
     <div class="page-heading hide-print report-page-heading">
@@ -36,7 +36,7 @@
             <label class="filter-field">
                 <span>Bulan</span>
                 <select class="select" name="month">
-                    <option value="">Seluruh tahun</option>
+                    <option value="">Semua bulan</option>
                     @foreach($months as $number => $name)
                         <option value="{{ $number }}" @selected($month === $number)>{{ $name }}</option>
                     @endforeach
@@ -206,27 +206,34 @@
     @endif
 
     @if($agreements)
-        @php $agreementPeak = max(1, $agreements['total']); @endphp
+        @php
+            $periodAgreementPeak = max(1, $agreements['totalAtPeriodEnd']);
+            $currentAgreementPeak = max(1, $agreements['total']);
+        @endphp
         <section class="panel report-panel">
             <div class="panel-heading report-panel-heading">
-                <div><span class="eyebrow">MOU / PKS</span><h2>Status dokumen kerja sama</h2><p>Posisi terkini · {{ $agreements['total'] }} dokumen resmi · {{ $agreements['pklOnly'] }} mitra PKL saja</p></div>
+                <div><span class="eyebrow">MOU / PKS</span><h2>Status dokumen kerja sama</h2><p>{{ $agreements['total'] }} dokumen resmi · {{ $agreements['pklOnly'] }} mitra PKL saja</p></div>
                 <a class="button button-light hide-print" href="{{ route('reports.export', ['section' => 'agreements']) }}">Ekspor Excel <span aria-hidden="true">↓</span></a>
             </div>
-            <div class="agreement-status-grid">
-                @foreach(\App\Models\Company::agreementStatusLabels() as $key => $label)
-                    @php $count = $agreements['byStatus'][$key] ?? 0; @endphp
-                    <div class="agreement-status-card"><span>{{ $label }}</span><strong>{{ $count }}</strong><span class="report-progress report-progress-amber"><i style="width: {{ round($count / $agreementPeak * 100) }}%"></i></span></div>
-                @endforeach
-            </div>
-            <div class="report-attention">
-                <div class="report-chart-heading"><div><h3>Dokumen perlu perhatian</h3><p>Segera berakhir, kedaluwarsa, atau datanya belum lengkap</p></div></div>
-                <div class="table-scroll"><table><thead><tr><x-sortable-th column="name" label="Mitra" /><x-sortable-th column="document_number" label="Nomor dokumen" /><x-sortable-th column="valid_until" label="Berlaku sampai" /><x-sortable-th column="agreement_status" label="Status" /></tr></thead><tbody>
-                    @forelse($agreements['attention'] as $company)
-                        <tr><td><strong>{{ $company->name }}</strong></td><td>{{ $company->document_number ?: '—' }}</td><td>{{ $company->valid_until?->format('d/m/Y') ?? '—' }}</td><td><span class="status-pill status-{{ $company->agreementStatus() }}">{{ \App\Models\Company::agreementStatusLabels()[$company->agreementStatus()] }}</span></td></tr>
-                    @empty
-                        <tr><td colspan="4"><div class="empty-state compact">Semua dokumen dalam kondisi normal.</div></td></tr>
-                    @endforelse
-                </tbody></table></div>
+            <div class="agreement-status-comparison">
+                <section class="agreement-status-block agreement-period-block">
+                    <div class="agreement-status-heading"><div><h3>Status pada periode laporan</h3><p>Berdasarkan tanggal berlaku MoU/PKS per {{ $agreements['periodEnd']->format('d/m/Y') }}</p></div><span class="agreement-period-tag">{{ $periodLabel }}</span></div>
+                    <div class="agreement-status-grid">
+                        @foreach(\App\Models\Company::agreementStatusLabels() as $key => $label)
+                            @php $count = $agreements['byStatusAtPeriodEnd'][$key] ?? 0; @endphp
+                            <div class="agreement-status-card"><span>{{ $label }}</span><strong>{{ $count }}</strong><span class="report-progress report-progress-teal"><i style="width: {{ round($count / $periodAgreementPeak * 100) }}%"></i></span></div>
+                        @endforeach
+                    </div>
+                </section>
+                <section class="agreement-status-block agreement-current-block">
+                    <div class="agreement-status-heading"><div><h3>Posisi terkini</h3><p>Status masa berlaku dokumen hari ini</p></div><span class="agreement-current-tag">Sekarang</span></div>
+                    <div class="agreement-status-grid">
+                        @foreach(\App\Models\Company::agreementStatusLabels() as $key => $label)
+                            @php $count = $agreements['byStatus'][$key] ?? 0; @endphp
+                            <div class="agreement-status-card"><span>{{ $label }}</span><strong>{{ $count }}</strong><span class="report-progress report-progress-indigo"><i style="width: {{ round($count / $currentAgreementPeak * 100) }}%"></i></span></div>
+                        @endforeach
+                    </div>
+                </section>
             </div>
         </section>
     @endif

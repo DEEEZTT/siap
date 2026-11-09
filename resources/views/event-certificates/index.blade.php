@@ -9,10 +9,10 @@
     </div>
 </div>
 <div class="toolbar">
-    <form class="filter-panel" method="get">
+    <form class="filter-panel js-ajax-table-filter" method="get">
         @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
-            <label class="filter-search"><span class="sr-only">Cari sertifikat</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nama penerima, nomor, atau judul"></label>
+            <label class="filter-search filter-search-no-icon"><span class="sr-only">Cari sertifikat</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nama, nomor, atau judul"></label>
             <select class="select" name="category"><option value="">Semua jenis</option>@foreach(\App\Models\Certificate::CATEGORIES as $value => $label)<option value="{{ $value }}" @selected(request('category') === $value)>{{ $label }}</option>@endforeach</select>
             <button class="button" type="submit">Cari data</button>
             @if(request()->hasAny(['q', 'category']))<a class="filter-reset" href="{{ route('event-certificates.index') }}">Bersihkan</a>@endif
@@ -21,8 +21,8 @@
 </div>
 <div class="table-card"><div class="table-scroll"><table><thead><tr><x-sortable-th column="certificate_number" label="Nomor" /><x-sortable-th column="recipient_name" label="Penerima" /><x-sortable-th column="title" label="Judul" /><x-sortable-th column="category" label="Jenis" /><x-sortable-th column="issued_at" label="Tanggal" /><th></th></tr></thead><tbody>
 @forelse($certificates as $certificate)
-<tr><td>{{ $certificate->certificate_number }}</td><td><strong>{{ $certificate->recipient_name }}</strong><small>{{ $certificate->recipient_detail }}</small></td><td>{{ $certificate->title }}</td><td>{{ \App\Models\Certificate::CATEGORIES[$certificate->category] ?? $certificate->category }}</td><td>{{ $certificate->issued_at->format('d/m/Y') }}</td>
-<td><a class="table-action" href="{{ route('event-certificates.show', $certificate) }}">Lihat / cetak</a></td></tr>
+<tr><td>{{ $certificate->certificate_number }}</td><td><strong>{{ $certificate->recipient_name }}</strong><small>{{ $certificate->recipient_detail }}</small></td><td>{{ $certificate->displayTitle() }}</td><td>{{ \App\Models\Certificate::CATEGORIES[$certificate->category] ?? $certificate->category }}</td><td>{{ $certificate->issued_at->format('d/m/Y') }}</td>
+<td><a class="table-action" href="{{ route('event-certificates.show', $certificate) }}" data-detail-modal data-certificate-preview-modal>Lihat sertifikat</a></td></tr>
 @empty
 <tr><td colspan="6"><div class="empty-state">Belum ada sertifikat kegiatan.</div></td></tr>
 @endforelse

@@ -11,7 +11,7 @@
     </div>
 </div>
 <div class="toolbar">
-    <form class="filter-panel" method="get">
+    <form class="filter-panel js-ajax-table-filter" method="get">
         @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari mitra perusahaan</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nama, kontak, telepon, atau email perusahaan"></label>
@@ -40,7 +40,7 @@
     <td>{{ $company->phone ?: '—' }}<small>{{ $company->email }}</small></td>
     <td>{{ $company->students_count }}</td>
     <td><span class="status {{ $company->status === 'aktif' ? 'status-selesai' : 'status-draft' }}">{{ str_replace('_', ' ', $company->status) }}</span></td>
-    <td><div class="row-actions"><a class="table-action" href="{{ route('companies.edit', $company) }}">Ubah</a></div></td>
+    <td><div class="row-actions"><a class="table-action" href="{{ route('companies.edit', $company) }}" data-company-edit-modal>Ubah</a></div></td>
 </tr>
 @empty
 <tr><td colspan="9"><div class="empty-state">Tidak ada data mitra untuk filter ini.</div></td></tr>

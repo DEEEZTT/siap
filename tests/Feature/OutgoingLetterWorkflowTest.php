@@ -25,11 +25,11 @@ class OutgoingLetterWorkflowTest extends TestCase
         $this->assertSame('menunggu_persetujuan_kepsek', $outgoing->status);
         $this->assertNotNull($outgoing->agenda_number);
         $this->assertNotNull($outgoing->letter_number);
-        $this->actingAs($kepalaTu)->get(route('outgoing.show', $outgoing))->assertOk()->assertSee('Menunggu keputusan Kepala Sekolah.');
+        $this->actingAs($kepalaTu)->get(route('outgoing.show', $outgoing))->assertOk()->assertSee('Surat diverifikasi dan diteruskan ke Kepala Sekolah untuk persetujuan.');
         $kepsek = User::factory()->create(['role' => 'kepsek']);
         $this->actingAs($kepsek)->post(route('outgoing.principal_review', $outgoing), ['decision' => 'setuju'])->assertRedirect();
         $this->assertSame('siap_dicetak', $outgoing->fresh()->status);
-        $this->actingAs($tu)->get(route('outgoing.print', $outgoing))->assertOk()->assertSee('PEMERINTAH PROVINSI KEPULAUAN RIAU');
+        $this->actingAs($tu)->get(route('outgoing.print', $outgoing))->assertOk()->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_tu_cannot_verify_an_outgoing_letter(): void

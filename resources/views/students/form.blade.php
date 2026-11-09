@@ -2,7 +2,7 @@
 @section('title',isset($student)?'Ubah data siswa':'Tambah siswa PKL')
 @section('content')
 <div class="page-heading"><div><span class="eyebrow blue">HUMAS · DATA PKL</span><h1>{{ isset($student)?'Ubah data siswa':'Tambah siswa PKL' }}</h1><p>Data ini digunakan sebagai sumber informasi sertifikat.</p></div></div>
-<form class="form-card" method="post" action="{{ isset($student)?route('students.update',$student):route('students.store') }}">
+<form class="form-card student-page-form" method="post" action="{{ isset($student)?route('students.update',$student):route('students.store') }}">
     @csrf
     @if(isset($student))@method('put')@endif
     <div class="form-grid">

@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Company;
+use App\Support\UploadedDocument;
 use App\Models\Student;
 use App\Support\LocalStoredFile;
 use App\Services\SpreadsheetExport;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -113,7 +115,7 @@ class CompanyController extends Controller
         unset($data['mou_document'], $data['remove_mou_document']);
 
         if ($mouDocument) {
-            $documentPath = $mouDocument->store('company-mous', 'local');
+            $documentPath = UploadedDocument::store($mouDocument, 'company-mous');
 
             if ($documentPath === false) {
                 return back()->withInput()->withErrors(['mou_document' => 'Dokumen MOU gagal disimpan. Silakan coba lagi.']);
@@ -150,7 +152,7 @@ class CompanyController extends Controller
         unset($data['mou_document'], $data['remove_mou_document']);
 
         if ($mouDocument) {
-            $documentPath = $mouDocument->store('company-mous', 'local');
+            $documentPath = UploadedDocument::store($mouDocument, 'company-mous');
 
             if ($documentPath === false) {
                 return back()->withInput()->withErrors(['mou_document' => 'Dokumen MOU gagal disimpan. Silakan coba lagi.']);
@@ -179,7 +181,7 @@ class CompanyController extends Controller
         return redirect()->route('companies.index')->with('success', 'Data mitra diperbarui.');
     }
 
-    public function destroy(Company $company): RedirectResponse
+    public function destroy(Request $request, Company $company): RedirectResponse|JsonResponse
     {
         abort_if($company->students()->exists(), 409, 'Perusahaan masih dipakai oleh data siswa. Ubah status kerja sama menjadi tidak aktif.');
         $mouDocumentPath = $company->mou_document_path;
@@ -188,6 +190,10 @@ class CompanyController extends Controller
 
         if ($mouDocumentPath) {
             Storage::disk('local')->delete($mouDocumentPath);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Data mitra berhasil dihapus.']);
         }
 
         return redirect()->route('companies.index')->with('success', 'Data mitra dihapus.');
@@ -221,7 +227,11 @@ class CompanyController extends Controller
             'email' => ['nullable', 'email', 'max:190'],
             'status' => ['required', 'in:aktif,tidak_aktif'],
             'notes' => ['nullable', 'string', 'max:2000'],
-            'mou_document' => ['nullable', 'file', 'mimes:pdf', 'max:10240', 'exclude_unless:partnership_type,mou'],
+            'mou_document' => ['exclude_unless:partnership_type,mou', 'nullable', 'file', 'max:10240', function ($attribute, $file, $fail): void {
+                if (! UploadedDocument::extension($file) || UploadedDocument::extension($file) !== 'pdf') {
+                    $fail('Dokumen MOU harus berupa file PDF yang valid.');
+                }
+            }],
             'remove_mou_document' => ['nullable', 'boolean'],
         ], [
             'agreement_type.required' => 'Pilih jenis dokumen kerja sama (MoU atau PKS).',

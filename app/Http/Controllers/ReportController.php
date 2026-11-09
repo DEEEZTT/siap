@@ -15,8 +15,6 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReportController extends Controller
 {
-    private const AGREEMENT_SORT_COLUMNS = ['name', 'document_number', 'valid_until', 'agreement_status'];
-
     public const MONTHS = [
         1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni',
         7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
@@ -24,10 +22,6 @@ class ReportController extends Controller
 
     public function index(Request $request): View
     {
-        $request->validate([
-            'sort' => ['nullable', 'in:'.implode(',', self::AGREEMENT_SORT_COLUMNS)],
-            'direction' => ['nullable', 'in:asc,desc'],
-        ]);
         [$year, $month] = $this->period($request);
         $role = $request->user()->role;
         $canSeeLetters = in_array($role, ['tu', 'kepsek', 'kepala_tu'], true);
@@ -44,8 +38,7 @@ class ReportController extends Controller
             'outgoing' => $canSeeLetters ? $this->outgoingSummary($year, $month) : null,
             'certificates' => $canSeePartnership || in_array($role, ['tu'], true) ? $this->certificateSummary($year, $month) : null,
             'agreements' => $canSeePartnership ? $this->agreementSummary(
-                $request->string('sort')->toString(),
-                $request->input('direction', 'asc'),
+                ($month ? \Carbon\CarbonImmutable::create($year, $month, 1)->endOfMonth() : \Carbon\CarbonImmutable::create($year, 12, 31))->endOfDay(),
             ) : null,
         ]);
     }
@@ -168,28 +161,19 @@ class ReportController extends Controller
         ];
     }
 
-    private function agreementSummary(string $sort = '', string $direction = 'asc'): array
+    private function agreementSummary(?\Carbon\CarbonImmutable $periodEnd = null): array
     {
+        $periodEnd ??= now()->toImmutable()->endOfDay();
         $companies = Company::query()->where('partnership_type', 'mou')->orderBy('valid_until')->get();
         $statuses = $companies->map(fn (Company $company): ?string => $company->agreementStatus());
-        $attention = $companies->filter(fn (Company $company): bool => in_array($company->agreementStatus(), ['segera_berakhir', 'kedaluwarsa', 'belum_lengkap'], true))->values();
-
-        if (in_array($sort, self::AGREEMENT_SORT_COLUMNS, true)) {
-            $attention = $attention->sortBy(
-                fn (Company $company) => match ($sort) {
-                    'agreement_status' => $company->agreementStatus(),
-                    'valid_until' => $company->valid_until?->toDateString(),
-                    default => $company->{$sort},
-                },
-                SORT_NATURAL | SORT_FLAG_CASE,
-                $direction === 'desc',
-            )->values();
-        }
-
+        $periodCompanies = $companies->filter(fn (Company $company): bool => $company->created_at?->lte($periodEnd) ?? false);
+        $periodStatuses = $periodCompanies->map(fn (Company $company): ?string => $company->agreementStatusAt($periodEnd));
         return [
             'total' => $companies->count(),
             'byStatus' => $statuses->countBy()->all(),
-            'attention' => $attention,
+            'byStatusAtPeriodEnd' => $periodStatuses->countBy()->all(),
+            'totalAtPeriodEnd' => $periodCompanies->count(),
+            'periodEnd' => $periodEnd,
             'pklOnly' => Company::query()->where('partnership_type', 'pkl_only')->count(),
         ];
     }

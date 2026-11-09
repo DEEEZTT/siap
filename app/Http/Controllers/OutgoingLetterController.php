@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\OutgoingLetter;
 use App\Models\Student;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class OutgoingLetterController extends Controller
@@ -43,6 +46,9 @@ class OutgoingLetterController extends Controller
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
+        $searchTerm = $request->string('q')->toString();
+        $matchesUnassignedNumberLabel = $request->filled('q')
+            && Str::contains(Str::lower('Nomor dibuat saat verifikasi'), Str::lower($searchTerm));
 
         $letters = OutgoingLetter::query()
             ->with('creator')
@@ -56,12 +62,23 @@ class OutgoingLetterController extends Controller
                 $query->whereBetween('letter_date', [$start->toDateString(), $end->toDateString()]);
             })
             ->when(! $request->filled('year') && $request->filled('month'), fn ($query) => $query->whereMonth('letter_date', $request->integer('month')))
-            ->when($request->filled('q'), fn ($query) => $query->where(fn ($search) => $search
-                ->where('recipient_name', 'like', '%'.$request->string('q')->toString().'%')
-                ->orWhere('recipient_address', 'like', '%'.$request->string('q')->toString().'%')
-                ->orWhere('subject', 'like', '%'.$request->string('q')->toString().'%')
-                ->orWhere('agenda_number', 'like', '%'.$request->string('q')->toString().'%')
-                ->orWhere('letter_number', 'like', '%'.$request->string('q')->toString().'%')))
+            ->when($request->filled('q'), function ($query) use ($searchTerm, $matchesUnassignedNumberLabel): void {
+                $query->where(function ($search) use ($searchTerm, $matchesUnassignedNumberLabel): void {
+                    $pattern = '%'.$searchTerm.'%';
+                    $search->where('recipient_name', 'like', $pattern)
+                        ->orWhere('subject', 'like', $pattern)
+                        ->orWhere('agenda_number', 'like', $pattern)
+                        ->orWhere('letter_number', 'like', $pattern)
+                        ->orWhere('type', 'like', $pattern)
+                        ->orWhere('status', 'like', $pattern)
+                        ->orWhere('letter_date', 'like', $pattern)
+                        ->orWhereHas('creator', fn ($creator) => $creator->where('name', 'like', $pattern));
+
+                    if ($matchesUnassignedNumberLabel) {
+                        $search->orWhereNull('letter_number');
+                    }
+                });
+            })
             ->when($request->filled('sort'), function ($query) use ($request): void {
                 $sort = $request->string('sort')->toString();
                 $direction = $request->input('direction', 'asc');
@@ -96,7 +113,7 @@ class OutgoingLetterController extends Controller
         return view('outgoing.create', $viewData);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $data = $request->validate($this->rulesForType($request->input('type')));
         $attributes = collect($data)->except('action')->all();
@@ -104,15 +121,31 @@ class OutgoingLetterController extends Controller
         if ($data['type'] === 'undangan') {
             $attributes = [...$attributes, ...$this->invitationDefaults($data['details']['grade_class'])];
         }
+        if ($data['type'] === 'perintah_tugas') {
+            $attributes = $this->normalizeTaskParticipants($attributes);
+        }
 
         $letter = OutgoingLetter::query()->create([...$attributes, 'created_by' => $request->user()->id, 'status' => $data['action'] === 'submit' ? 'menunggu_verifikasi' : 'draft']);
 
-        return redirect()->route('outgoing.show', $letter)->with('success', $data['action'] === 'submit' ? 'Surat dikirim ke Kepala TU untuk diverifikasi.' : 'Draft surat berhasil disimpan.');
+        $message = $data['action'] === 'submit' ? 'Surat dikirim ke Kepala TU untuk diverifikasi.' : 'Draft surat berhasil disimpan.';
+        $destination = $data['action'] === 'draft'
+            ? route('outgoing.index')
+            : route('outgoing.show', $letter);
+
+        if ($request->expectsJson()) {
+            return response()->json(['redirect' => $destination, 'message' => $message], 201);
+        }
+
+        return redirect($destination)->with('success', $message);
     }
 
-    public function show(OutgoingLetter $outgoing): View
+    public function show(Request $request, OutgoingLetter $outgoing): View
     {
         $outgoing->load(['creator', 'verifier', 'principalReviewer', 'disposition.completer']);
+
+        if ($request->ajax()) {
+            return view('outgoing.preview', compact('outgoing'));
+        }
 
         return view('outgoing.show', compact('outgoing'));
     }
@@ -132,7 +165,7 @@ class OutgoingLetterController extends Controller
         return view('outgoing.edit', $viewData);
     }
 
-    public function update(Request $request, OutgoingLetter $outgoing): RedirectResponse
+    public function update(Request $request, OutgoingLetter $outgoing): RedirectResponse|JsonResponse
     {
         abort_unless(in_array($outgoing->status, ['draft', 'menunggu_verifikasi', 'perlu_revisi', 'perlu_revisi_kepsek']), 403);
         $data = $request->validate($this->rulesForType($outgoing->type, includeType: false));
@@ -141,17 +174,51 @@ class OutgoingLetterController extends Controller
         if ($outgoing->type === 'undangan') {
             $attributes = [...$attributes, ...$this->invitationDefaults($data['details']['grade_class'])];
         }
+        if ($outgoing->type === 'perintah_tugas') {
+            $attributes = $this->normalizeTaskParticipants($attributes);
+        }
 
         $outgoing->update([...$attributes, 'status' => $data['action'] === 'submit' ? 'menunggu_verifikasi' : 'draft', 'verification_note' => null]);
 
-        return redirect()->route('outgoing.show', $outgoing)->with('success', 'Surat berhasil diperbarui.');
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Surat berhasil diperbarui.', 'status' => $outgoing->status]);
+        }
+
+        $destination = $data['action'] === 'draft'
+            ? route('outgoing.index')
+            : route('outgoing.show', $outgoing);
+
+        return redirect($destination)->with('success', 'Surat berhasil diperbarui.');
     }
 
-    public function verify(Request $request, OutgoingLetter $outgoing): RedirectResponse
+    public function submitForVerification(Request $request, OutgoingLetter $outgoing): RedirectResponse|JsonResponse
+    {
+        abort_unless(in_array($request->user()->role, ['tu', 'kepala_tu'], true), 403);
+
+        DB::transaction(function () use ($outgoing): void {
+            $lockedOutgoing = OutgoingLetter::query()->whereKey($outgoing->getKey())->lockForUpdate()->firstOrFail();
+            abort_unless(in_array($lockedOutgoing->status, ['draft', 'perlu_revisi', 'perlu_revisi_kepsek'], true), 409, 'Surat ini tidak dapat dikirim untuk verifikasi.');
+            $lockedOutgoing->update(['status' => 'menunggu_verifikasi', 'verification_note' => null]);
+        }, attempts: 5);
+
+        ActivityLog::record('surat_keluar_dikirim_verifikasi', 'Mengirim surat keluar #'.$outgoing->id.' ke Kepala TU untuk diverifikasi.', $outgoing);
+        $message = 'Surat dikirim ke Kepala TU untuk diverifikasi.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return redirect()->route('outgoing.index')->with('success', $message);
+    }
+
+    public function verify(Request $request, OutgoingLetter $outgoing): RedirectResponse|JsonResponse
     {
         $data = $request->validate(['decision' => ['required', 'in:setuju,revisi'], 'verification_note' => ['nullable', 'string', 'max:2000']]);
         if ($data['decision'] === 'revisi') {
-            $request->validate(['verification_note' => ['required', 'string', 'max:2000']]);
+            $request->validate(
+                ['verification_note' => ['required', 'string', 'max:2000']],
+                ['verification_note.required' => 'Catatan untuk TU wajib diisi jika meminta revisi.'],
+            );
         }
 
         DB::transaction(function () use ($data, $outgoing, $request): void {
@@ -180,12 +247,20 @@ class OutgoingLetterController extends Controller
 
         ActivityLog::record('surat_keluar_verifikasi', 'Verifikasi surat keluar #'.$outgoing->id.': '.$data['decision'].'.', $outgoing);
 
-        return back()->with('success', $data['decision'] === 'setuju' ? 'Surat diverifikasi dan diteruskan ke Kepala Sekolah untuk persetujuan.' : 'Surat dikembalikan kepada pembuat untuk diperbaiki.');
+        $message = $data['decision'] === 'setuju'
+            ? 'Surat diverifikasi dan diteruskan ke Kepala Sekolah untuk persetujuan.'
+            : 'Surat dikembalikan kepada pembuat untuk diperbaiki.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
-    public function principalReview(Request $request, OutgoingLetter $outgoing): RedirectResponse
+    public function principalReview(Request $request, OutgoingLetter $outgoing): RedirectResponse|JsonResponse
     {
-        abort_unless($request->user()->role === 'kepsek', 403, 'Persetujuan surat keluar hanya dapat dilakukan oleh Kepala Sekolah.');
+        abort_unless(in_array($request->user()->role, ['kepsek', 'kepala_tu'], true), 403, 'Persetujuan surat keluar hanya dapat dilakukan oleh Kepala Sekolah atau Kepala TU.');
 
         $data = $request->validate([
             'decision' => ['required', 'in:setuju,revisi'],
@@ -193,7 +268,10 @@ class OutgoingLetterController extends Controller
         ]);
 
         if ($data['decision'] === 'revisi') {
-            $request->validate(['kepsek_note' => ['required', 'string', 'max:2000']]);
+            $request->validate(
+                ['kepsek_note' => ['required', 'string', 'max:2000']],
+                ['kepsek_note.required' => 'Catatan revisi wajib diisi sebelum surat dikembalikan ke TU.'],
+            );
         }
 
         DB::transaction(function () use ($request, $data, $outgoing): void {
@@ -221,19 +299,91 @@ class OutgoingLetterController extends Controller
 
         ActivityLog::record('surat_keluar_persetujuan', 'Persetujuan Kepala Sekolah atas surat keluar #'.$outgoing->id.': '.$data['decision'].'.', $outgoing);
 
-        return back()->with('success', $data['decision'] === 'setuju' ? 'Surat disetujui Kepala Sekolah dan siap dicetak.' : 'Surat dikembalikan ke Tata Usaha untuk direvisi.');
+        $message = $data['decision'] === 'setuju'
+            ? 'Surat disetujui Kepala Sekolah dan siap dicetak.'
+            : 'Surat dikembalikan ke Tata Usaha untuk direvisi.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
-    public function print(OutgoingLetter $outgoing): View
+    public function print(Request $request, OutgoingLetter $outgoing)
     {
-        return view('outgoing.print', compact('outgoing'));
+        $kepriLogo = public_path('images/kepri-pdf.png');
+        $schoolLogo = public_path('images/smkn4-pdf.png');
+        abort_unless(is_file($kepriLogo) && is_file($schoolLogo), 500, 'Logo surat tidak ditemukan.');
+
+        $filename = implode('-', array_filter([
+            'surat-keluar',
+            Str::slug($outgoing->agenda_number ?? 'draft'),
+            Str::limit(Str::slug($outgoing->subject), 70, ''),
+        ])).'.pdf';
+        $storage = Storage::disk('local');
+        $pdfPath = 'outgoing-previews/'.$outgoing->id.'.pdf';
+        $versionPath = 'outgoing-previews/'.$outgoing->id.'.version';
+        $version = hash('sha256', implode('|', [
+            $outgoing->updated_at?->format('U.u') ?? '',
+            (string) filemtime($kepriLogo),
+            (string) filemtime($schoolLogo),
+            (string) hash_file('sha256', resource_path('views/outgoing/pdf.blade.php')),
+            (string) hash_file('sha256', resource_path('views/outgoing/document.blade.php')),
+        ]));
+        $headers = [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => ($request->boolean('download') ? 'attachment' : 'inline').'; filename="'.$filename.'"',
+            'X-Content-Type-Options' => 'nosniff',
+        ];
+
+        if ($storage->exists($pdfPath) && $storage->exists($versionPath) && trim($storage->get($versionPath)) === $version) {
+            $cachedPdf = \App\Support\LocalStoredFile::resolve($pdfPath);
+            if ($cachedPdf) {
+                return response()->file($cachedPdf, $headers);
+            }
+        }
+
+        $pdf = Pdf::loadView('outgoing.pdf', [
+            'outgoing' => $outgoing,
+            'logoKepri' => 'data:image/png;base64,'.base64_encode((string) file_get_contents($kepriLogo)),
+            'logoSmkn4' => 'data:image/png;base64,'.base64_encode((string) file_get_contents($schoolLogo)),
+        ])
+            ->setPaper('a4', 'portrait')
+            ->output();
+
+        $storage->put($pdfPath, $pdf);
+        $storage->put($versionPath, $version);
+
+        return response($pdf, 200, $headers);
     }
 
-    public function destroy(OutgoingLetter $outgoing): RedirectResponse
+    public function complete(Request $request, OutgoingLetter $outgoing): RedirectResponse|JsonResponse
     {
-        $user = request()->user();
+        abort_unless(in_array($request->user()->role, ['tu', 'kepala_tu'], true), 403);
+
+        DB::transaction(function () use ($outgoing): void {
+            $lockedOutgoing = OutgoingLetter::query()->whereKey($outgoing->getKey())->lockForUpdate()->firstOrFail();
+            abort_unless($lockedOutgoing->status === 'siap_dicetak', 409, 'Surat hanya dapat ditandai selesai setelah disetujui dan siap dicetak.');
+
+            $lockedOutgoing->update(['status' => 'selesai']);
+        });
+
+        ActivityLog::record('surat_keluar_selesai', 'Surat keluar #'.$outgoing->id.' ditandai selesai setelah dicetak/dikirim.', $outgoing);
+        $message = 'Surat ditandai selesai.';
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => $message, 'status' => 'selesai']);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    public function destroy(Request $request, OutgoingLetter $outgoing): RedirectResponse|JsonResponse
+    {
+        $user = $request->user();
         abort_unless(in_array($user->role, ['tu', 'kepala_tu'], true), 403);
-        abort_unless(in_array($outgoing->status, ['draft', 'perlu_revisi', 'perlu_revisi_kepsek', 'selesai']), 403);
+        abort_unless(in_array($outgoing->status, ['draft', 'menunggu_verifikasi', 'perlu_revisi', 'perlu_revisi_kepsek', 'selesai']), 403);
         abort_unless($user->role === 'kepala_tu' || $outgoing->created_by === $user->id, 403);
         $dispositionFile = $outgoing->disposition?->attachment_path;
         if ($outgoing->file_path) {
@@ -244,6 +394,10 @@ class OutgoingLetterController extends Controller
         }
         ActivityLog::record('surat_keluar_dihapus', 'Menghapus surat keluar #'.$outgoing->id.'.', $outgoing);
         $outgoing->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Surat keluar dihapus.']);
+        }
 
         return redirect()->route('outgoing.index')->with('success', 'Surat keluar dihapus.');
     }
@@ -288,9 +442,10 @@ class OutgoingLetterController extends Controller
 
         if ($type === 'undangan') {
             return $rules + [
-                'details' => ['required', 'array:invitation_context,grade_class'],
+                'details' => ['required', 'array:invitation_context,grade_class,attachments'],
                 'details.invitation_context' => ['required', 'string', 'max:1000'],
                 'details.grade_class' => ['required', 'string', 'max:80'],
+                'details.attachments' => ['nullable', 'string', 'max:500'],
                 'event_date' => ['required', 'date'],
                 'event_time' => ['required', 'string', 'max:30'],
                 'event_place' => ['required', 'string', 'max:190'],
@@ -299,12 +454,22 @@ class OutgoingLetterController extends Controller
 
         if ($type === 'perintah_tugas') {
             return $rules + ['recipient_name' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190']] + [
-                'details' => ['required', 'array:basis,rank,employee_number,position,assignment'],
+                'details' => ['required', 'array:basis,rank,employee_number,position,assignment,participants,recipients'],
                 'details.basis' => ['required', 'string', 'max:2000'],
                 'details.rank' => ['nullable', 'string', 'max:120'],
                 'details.employee_number' => ['nullable', 'string', 'max:120'],
                 'details.position' => ['nullable', 'string', 'max:190'],
                 'details.assignment' => ['required', 'string', 'max:10000'],
+                'details.participants' => ['sometimes', 'nullable', 'array', 'max:50'],
+                'details.participants.*' => ['array:name,class'],
+                'details.participants.*.name' => ['nullable', 'string', 'max:190'],
+                'details.participants.*.class' => ['nullable', 'string', 'max:120'],
+                'details.recipients' => ['sometimes', 'nullable', 'array', 'max:20'],
+                'details.recipients.*' => ['array:name,rank,employee_number,position'],
+                'details.recipients.*.name' => ['nullable', 'string', 'max:190'],
+                'details.recipients.*.rank' => ['nullable', 'string', 'max:120'],
+                'details.recipients.*.employee_number' => ['nullable', 'string', 'max:120'],
+                'details.recipients.*.position' => ['nullable', 'string', 'max:190'],
             ];
         }
 
@@ -339,5 +504,40 @@ class OutgoingLetterController extends Controller
             'recipient_address' => 'di Tanjungpinang',
             'subject' => 'Undangan',
         ];
+    }
+
+    /** @param array<string, mixed> $attributes @return array<string, mixed> */
+    private function normalizeTaskParticipants(array $attributes): array
+    {
+        $primaryRecipient = [
+            'name' => trim($attributes['recipient_name'] ?? ''),
+            'rank' => trim($attributes['details']['rank'] ?? ''),
+            'employee_number' => trim($attributes['details']['employee_number'] ?? ''),
+            'position' => trim($attributes['details']['position'] ?? ''),
+        ];
+        $recipients = [$primaryRecipient];
+        foreach ($attributes['details']['recipients'] ?? [] as $recipient) {
+            $recipient = [
+                'name' => trim($recipient['name'] ?? ''),
+                'rank' => trim($recipient['rank'] ?? ''),
+                'employee_number' => trim($recipient['employee_number'] ?? ''),
+                'position' => trim($recipient['position'] ?? ''),
+            ];
+            if ($recipient['name'] !== '') {
+                $recipients[] = $recipient;
+            }
+        }
+
+        $participants = array_map(static fn (array $participant): array => [
+            'name' => trim($participant['name'] ?? ''),
+            'class' => trim($participant['class'] ?? ''),
+        ], $attributes['details']['participants'] ?? []);
+        $attributes['details']['participants'] = array_values(array_filter(
+            $participants,
+            static fn (array $participant): bool => $participant['name'] !== '',
+        ));
+        $attributes['details']['recipients'] = $recipients;
+
+        return $attributes;
     }
 }

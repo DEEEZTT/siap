@@ -51,7 +51,7 @@ class ConfidentialLetterAccessTest extends TestCase
 
     public function test_confidential_attachment_cannot_be_downloaded_by_unauthorised_staff(): void
     {
-        Storage::fake('local');
+        $this->useTemporaryLocalDisk();
         $creator = User::factory()->create(['role' => 'tu']);
         $other = User::factory()->create(['role' => 'tu']);
         $letter = $this->letter($creator);

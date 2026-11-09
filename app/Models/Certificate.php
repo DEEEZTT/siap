@@ -16,6 +16,24 @@ class Certificate extends Model
         'lainnya' => 'Lainnya',
     ];
 
+    public const DEFAULT_TITLES = [
+        'penghargaan' => 'Sertifikat Penghargaan',
+        'peserta' => 'Sertifikat Peserta Kegiatan',
+        'narasumber' => 'Sertifikat Narasumber',
+        'lainnya' => 'Sertifikat Kegiatan',
+    ];
+
+    public function displayTitle(): string
+    {
+        $title = trim((string) $this->title);
+
+        if (in_array($title, array_values(self::DEFAULT_TITLES), true)) {
+            return self::DEFAULT_TITLES[$this->category] ?? $title;
+        }
+
+        return $title;
+    }
+
     protected function casts(): array
     {
         return ['issued_at' => 'date'];

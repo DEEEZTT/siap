@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use Illuminate\Support\Facades\Storage;
+
 class LocalStoredFile
 {
     public static function resolve(string $relativePath): ?string
@@ -9,6 +11,7 @@ class LocalStoredFile
         $relativePath = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
         $defaultDisk = (string) config('filesystems.default', 'local');
         $roots = array_unique(array_filter([
+            Storage::disk('local')->path(''),
             config('filesystems.disks.local.root'),
             config('filesystems.disks.'.$defaultDisk.'.root'),
             storage_path('app'),

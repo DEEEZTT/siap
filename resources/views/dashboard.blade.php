@@ -89,18 +89,18 @@
     @if($canSeePkl)
         <section class="panel">
             <div class="panel-heading">
-                <div><span class="eyebrow">PERLU PERHATIAN</span><h2>Masa berlaku MoU/PKS</h2></div>
-                <a class="text-link" href="{{ route('companies.index', ['validity' => 'segera_berakhir']) }}">Lihat semua →</a>
+                <div><span class="eyebrow">PERLU PERHATIAN</span><h2>Dokumen MoU/PKS</h2><p>Segera berakhir, kedaluwarsa, atau datanya belum lengkap</p></div>
+                <a class="text-link" href="{{ route('companies.index', ['type' => 'mou']) }}">Lihat semua</a>
             </div>
-            @forelse($agreementsExpiring as $company)
+            @forelse($agreementsAttention as $company)
                 @php $agreementStatus = $company->agreementStatus(); @endphp
-                <a class="activity-row" href="{{ route('companies.edit', $company) }}">
-                    <span class="activity-icon activity-icon-amber">⌂</span>
-                    <span class="activity-copy"><b>{{ $company->name }}</b><small>{{ $company->document_number ?: 'Tanpa nomor' }} · berakhir {{ $company->valid_until?->format('d/m/Y') }}</small></span>
+                <a class="activity-row" href="{{ route('companies.edit', $company) }}" data-company-edit-modal>
+                    <span class="activity-icon activity-icon-amber"></span>
+                    <span class="activity-copy"><b>{{ $company->name }}</b><small>{{ $company->document_number ?: 'Tanpa nomor' }} · berakhir {{ $company->valid_until?->format('d/m/Y') ?? 'tanggal belum diisi' }}</small></span>
                     <span class="status {{ $agreementStatus === 'kedaluwarsa' ? 'status-perlu_revisi' : 'status-menunggu_verifikasi' }}">{{ \App\Models\Company::agreementStatusLabels()[$agreementStatus] ?? '' }}</span>
                 </a>
             @empty
-                <div class="empty-state compact">Tidak ada MoU/PKS yang akan berakhir dalam {{ \App\Models\Company::EXPIRING_WITHIN_DAYS }} hari.</div>
+                <div class="empty-state compact">Tidak ada dokumen MoU/PKS yang perlu perhatian.</div>
             @endforelse
         </section>
 

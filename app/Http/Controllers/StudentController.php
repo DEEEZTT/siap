@@ -9,6 +9,7 @@ use App\Services\SpreadsheetExport;
 use App\Services\StudentSpreadsheet;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -279,15 +280,20 @@ class StudentController extends Controller
         ])->deleteFileAfterSend(true);
     }
 
-    public function destroy(Student $student): RedirectResponse
+    public function destroy(Request $request, Student $student): RedirectResponse|JsonResponse
     {
+        $academicYear = $student->academic_year;
         ActivityLog::record('siswa_dihapus', 'Menghapus data siswa PKL '.$student->name.' (NIS '.$student->nis.')'.($student->completed_at ? ' beserta sertifikatnya.' : '.'), $student);
         $student->delete();
 
-        return redirect()->route('students.index', ['academic_year' => $student->academic_year])->with('success', 'Data siswa dihapus.');
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Data siswa beserta sertifikatnya dihapus.']);
+        }
+
+        return redirect()->route('students.index', ['academic_year' => $academicYear])->with('success', 'Data siswa dihapus.');
     }
 
-    public function complete(Request $request, Student $student): RedirectResponse
+    public function complete(Request $request, Student $student): RedirectResponse|JsonResponse
     {
         abort_if($student->completed_at, 409, 'Sertifikat siswa sudah diterbitkan.');
         abort_if(! $student->internship_end || $student->internship_end->isFuture(), 422, 'PKL siswa belum selesai.');
@@ -295,6 +301,13 @@ class StudentController extends Controller
         $student->update(['predicate' => $data['predicate'], 'completed_at' => now(), 'certificate_number' => $student->certificate_number ?? 'PKL/'.now()->year.'/'.$student->nis]);
 
         ActivityLog::record('sertifikat_pkl_terbit', 'Menerbitkan sertifikat PKL '.$student->certificate_number.' untuk '.$student->name.'.', $student);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Sertifikat PKL berhasil diterbitkan.',
+                'redirect' => route('certificates.show', $student),
+            ]);
+        }
 
         return redirect()->route('certificates.show', $student)->with('success', 'Sertifikat siap dicetak.');
     }

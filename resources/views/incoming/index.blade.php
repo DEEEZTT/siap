@@ -8,18 +8,22 @@
     @endif
 </div>
 <div class="toolbar">
-    <form class="filter-panel" method="get">
+    <form class="filter-panel js-ajax-table-filter" method="get">
         @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari surat masuk</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nomor surat, pengirim, atau perihal"></label>
             <button class="button" type="submit"><span aria-hidden="true">⌕</span> Cari data</button>
-            @if(request()->hasAny(['q', 'status', 'year', 'month']))
+            @if(request()->hasAny(['q', 'status', 'classification', 'year', 'month']))
                 <a class="filter-reset" href="{{ route('incoming.index') }}">Bersihkan</a>
             @endif
         </div>
-        <details class="filter-details" @if(request()->filled('status') || request()->filled('year') || request()->filled('month')) open @endif>
-            <summary><span class="filter-summary-icon" aria-hidden="true">☷</span> Filter lanjutan <span class="filter-summary-hint">Status dan tanggal diterima</span></summary>
+        <details class="filter-details" @if(request()->filled('status') || request()->filled('classification') || request()->filled('year') || request()->filled('month')) open @endif>
+            <summary><span class="filter-summary-icon" aria-hidden="true">☷</span> Filter lanjutan <span class="filter-summary-hint">Status, sifat, dan tanggal diterima</span></summary>
             <div class="filter-options">
+                <label class="filter-field"><span>Sifat surat</span><select class="select" name="classification">
+                    <option value="">Semua sifat</option>
+                    @foreach(['biasa' => 'Biasa', 'segera' => 'Segera', 'sangat_segera' => 'Sangat segera', 'rahasia' => 'Rahasia'] as $value => $label)<option value="{{ $value }}" @selected(request('classification') === $value)>{{ $label }}</option>@endforeach
+                </select></label>
                 <label class="filter-field"><span>Status surat</span><select class="select" name="status">
                     <option value="">Semua status</option>
                     <option value="menunggu_disposisi" @selected(request('status') === 'menunggu_disposisi')>Menunggu disposisi</option>
@@ -59,7 +63,7 @@
                         <td>{{ $letter->subject }}</td>
                         <td>{{ str_replace('_', ' ', $letter->classification) }}</td>
                         <td><span class="status status-{{ $letter->status }}">{{ str_replace('_', ' ', $letter->status) }}</span></td>
-                        <td><div class="row-actions"><a class="table-action" href="{{ route('incoming.show', $letter) }}">Buka</a></div></td>
+                        <td><div class="row-actions"><a class="table-action" href="{{ route('incoming.preview', $letter) }}" data-detail-modal>Buka</a></div></td>
                     </tr>
                 @empty
                     <tr><td colspan="7"><div class="empty-state">Tidak ada surat untuk filter ini.</div></td></tr>

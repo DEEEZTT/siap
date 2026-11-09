@@ -36,6 +36,7 @@ return [
             'serve' => true,
             'throw' => false,
             'report' => false,
+            'disk_name' => 'local',
             'mime_detector' => \League\MimeTypeDetection\ExtensionMimeTypeDetector::class,
         ],
 
@@ -46,6 +47,7 @@ return [
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
+            'disk_name' => 'public',
             'mime_detector' => \League\MimeTypeDetection\ExtensionMimeTypeDetector::class,
         ],
 

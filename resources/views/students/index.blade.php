@@ -6,7 +6,7 @@
     <div class="row-actions">
         @if($issuedCertificateCount > 0)
             <div class="bulk-certificate-form">
-                <a class="button bulk-certificate-button" href="{{ route('certificates.download_all') }}">Unduh semua sertifikat terbit <span>{{ $issuedCertificateCount }}</span></a>
+                <a class="button bulk-certificate-button" href="{{ route('certificates.download_all') }}" data-pkl-certificate-batch-modal>Unduh semua sertifikat terbit <span>{{ $issuedCertificateCount }}</span></a>
                 <small>Sertifikat terbit · semua tahun · simpan sebagai PDF</small>
             </div>
         @endif
@@ -28,14 +28,14 @@
     </form>
 </div>
 <div class="toolbar student-toolbar">
-    <form class="filter-panel" method="get">
+    <form class="filter-panel js-ajax-table-filter" method="get">
         @if(request()->filled('sort'))<input type="hidden" name="sort" value="{{ request('sort') }}"><input type="hidden" name="direction" value="{{ request('direction', 'asc') }}">@endif
         <div class="filter-main">
             <label class="filter-search"><span class="filter-search-icon" aria-hidden="true">⌕</span><span class="sr-only">Cari data siswa PKL</span><input class="input" name="q" value="{{ request('q') }}" placeholder="Cari nama, NIS, jurusan, atau perusahaan"></label>
             <button class="button" type="submit"><span aria-hidden="true">⌕</span> Cari data</button>
             @if(request()->hasAny(['q', 'academic_year', 'status']))<a class="filter-reset" href="{{ route('students.index') }}">Bersihkan</a>@endif
         </div>
-        <details class="filter-details" @if(request()->filled('status')) open @endif>
+        <details class="filter-details" @if(request()->filled('status') || request()->filled('academic_year')) open @endif>
             <summary><span class="filter-summary-icon" aria-hidden="true">☷</span> Filter lanjutan <span class="filter-summary-hint">Tahun pelajaran dan status PKL</span></summary>
             <div class="filter-options">
                 <label class="filter-field"><span>Tahun pelajaran</span><select class="select" name="academic_year">@foreach($academicYears as $academicYear)<option value="{{ $academicYear }}" @selected($selectedAcademicYear === $academicYear)>{{ $academicYear }}</option>@endforeach</select></label>
@@ -55,15 +55,15 @@
     <td>{{ $student->predicate ?: 'Belum dipilih' }}</td>
     <td><span class="status {{ $student->completed_at ? 'status-selesai' : 'status-draft' }}">{{ $student->completed_at ? 'Selesai' : 'Berlangsung' }}</span></td>
     <td><div class="row-actions student-actions">
-        @if(!$student->completed_at)<a class="button button-light button-small" href="{{ route('students.edit', $student) }}">Ubah data</a>@endif
+        @if(!$student->completed_at)<a class="button button-light button-small" href="{{ route('students.edit', $student) }}" data-student-edit-modal>Ubah data</a>@endif
         @if($student->completed_at)
             <small title="Data siswa dengan sertifikat terbit dipertahankan agar sertifikat tetap dapat diakses.">Sertifikat terbit</small>
         @endif
         @if($student->completed_at)
-            <a class="button button-light button-small" href="{{ route('certificates.show', $student) }}">Lihat sertifikat</a>
+            <a class="button button-light button-small" href="{{ route('certificates.show', $student) }}" data-detail-modal data-pkl-certificate-preview-modal>Lihat sertifikat</a>
         @elseif($student->internship_end && $student->internship_end->isPast())
             @if(in_array($student->predicate, ['Cukup', 'Baik', 'Sangat Baik'], true))
-                <form method="post" action="{{ route('students.complete', $student) }}" onsubmit="return confirm('Yakin terbitkan sertifikat PKL ini dengan predikat {{ $student->predicate }}?')">@csrf<input type="hidden" name="predicate" value="{{ $student->predicate }}"><button class="button button-small" type="submit" aria-label="Terbitkan sertifikat untuk {{ $student->name }}">Terbitkan sertifikat</button></form>
+                <form class="student-complete-form" method="post" action="{{ route('students.complete', $student) }}" onsubmit="return confirm('Yakin terbitkan sertifikat PKL ini dengan predikat {{ $student->predicate }}?')">@csrf<input type="hidden" name="predicate" value="{{ $student->predicate }}"><button class="button button-small" type="submit" aria-label="Terbitkan sertifikat untuk {{ $student->name }}">Terbitkan sertifikat</button></form>
             @else
                 <a class="button button-light button-small" href="{{ route('students.edit', $student) }}">Atur predikat</a>
             @endif

@@ -62,8 +62,12 @@ class EventCertificateController extends Controller
         return redirect()->route('event-certificates.index')->with('success', 'Sertifikat untuk '.$certificate->recipient_name.' berhasil diterbitkan.');
     }
 
-    public function show(Certificate $certificate): View
+    public function show(Request $request, Certificate $certificate): View
     {
+        if ($request->ajax()) {
+            return view('event-certificates.preview', compact('certificate'));
+        }
+
         return view('event-certificates.show', compact('certificate'));
     }
 
@@ -80,11 +84,15 @@ class EventCertificateController extends Controller
         return view('event-certificates.print-all', compact('certificates'));
     }
 
-    public function destroy(Certificate $certificate): RedirectResponse
+    public function destroy(Request $request, Certificate $certificate): RedirectResponse|\Illuminate\Http\JsonResponse
     {
-        abort_unless(request()->user()->role === 'kepala_tu', 403, 'Hanya Kepala TU yang dapat menghapus sertifikat.');
+        abort_unless($request->user()->role === 'kepala_tu', 403, 'Hanya Kepala TU yang dapat menghapus sertifikat.');
         ActivityLog::record('sertifikat_kegiatan_dihapus', 'Menghapus sertifikat '.$certificate->certificate_number.' a.n. '.$certificate->recipient_name.'.', $certificate);
         $certificate->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Sertifikat dihapus.']);
+        }
 
         return redirect()->route('event-certificates.index')->with('success', 'Sertifikat dihapus.');
     }

@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\IncomingLetter;
+use App\Support\UploadedDocument;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +22,7 @@ class IncomingLetterController extends Controller
         $request->validate([
             'q' => ['nullable', 'string', 'max:190'],
             'status' => ['nullable', 'in:menunggu_disposisi,menunggu_konfirmasi_tu,selesai'],
+            'classification' => ['nullable', 'in:biasa,segera,sangat_segera,rahasia'],
             'year' => ['nullable', 'integer', 'between:1900,2100'],
             'month' => ['nullable', 'integer', 'between:1,12'],
             'sort' => ['nullable', 'in:'.implode(',', self::SORTABLE_COLUMNS)],
@@ -50,6 +53,7 @@ class IncomingLetterController extends Controller
             ->visibleTo($request->user())
             ->with('creator')
             ->when($request->filled('status'), fn ($query) => $query->where('status', $request->string('status')->toString()))
+            ->when($request->filled('classification'), fn ($query) => $query->where('classification', $request->string('classification')->toString()))
             ->when($request->filled('year'), function ($query) use ($request): void {
                 $year = $request->integer('year');
                 $start = CarbonImmutable::create($year, $request->filled('month') ? $request->integer('month') : 1, 1);
@@ -62,7 +66,9 @@ class IncomingLetterController extends Controller
                 ->where('agenda_number', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('letter_number', 'like', '%'.$request->string('q')->toString().'%')
                 ->orWhere('sender', 'like', '%'.$request->string('q')->toString().'%')
-                ->orWhere('subject', 'like', '%'.$request->string('q')->toString().'%')))
+                ->orWhere('subject', 'like', '%'.$request->string('q')->toString().'%')
+                ->orWhere('classification', 'like', '%'.$request->string('q')->toString().'%')
+                ->orWhere('notes', 'like', '%'.$request->string('q')->toString().'%')))
             ->when($request->filled('sort'), function ($query) use ($request): void {
                 $query->orderBy($request->string('sort')->toString(), $request->input('direction', 'asc'))
                     ->orderByDesc('id');
@@ -80,9 +86,14 @@ class IncomingLetterController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate(['letter_number' => ['required', 'string', 'max:120'], 'letter_date' => ['required', 'date'], 'received_at' => ['required', 'date'], 'sender' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190'], 'classification' => ['required', 'in:biasa,segera,sangat_segera,rahasia'], 'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'], 'notes' => ['nullable', 'string', 'max:2000']]);
+        $data = $request->validate(['letter_number' => ['required', 'string', 'max:120'], 'letter_date' => ['required', 'date'], 'received_at' => ['required', 'date'], 'sender' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190'], 'classification' => ['required', 'in:biasa,segera,sangat_segera,rahasia'], 'file' => ['nullable', 'file', 'max:10240', function ($attribute, $file, $fail): void {
+            if (! UploadedDocument::extension($file)) {
+                $fail('File harus berupa PDF, JPG, JPEG, atau PNG yang valid.');
+            }
+        }], 'notes' => ['nullable', 'string', 'max:2000']]);
         $year = (int) substr($data['received_at'], 0, 4);
-        $filePath = $request->file('file')?->store('letters/incoming', 'local');
+        $uploadedFile = $request->file('file');
+        $filePath = $uploadedFile ? UploadedDocument::store($uploadedFile, 'letters/incoming') : null;
         $letterData = collect($data)->except('file')->all();
 
         $letter = DB::transaction(function () use ($letterData, $filePath, $request, $year): IncomingLetter {
@@ -109,6 +120,17 @@ class IncomingLetterController extends Controller
         return view('incoming.show', compact('incoming'));
     }
 
+    public function preview(Request $request, IncomingLetter $incoming): View|RedirectResponse
+    {
+        if (! $request->ajax()) {
+            return redirect()->route('incoming.show', $incoming);
+        }
+
+        $incoming->load(['disposition.completer', 'disposition.confirmer']);
+
+        return view('incoming.preview', compact('incoming'));
+    }
+
     public function edit(IncomingLetter $incoming): View
     {
         abort_unless(in_array($incoming->status, ['menunggu_disposisi', 'perlu_perbaikan'], true), 403);
@@ -116,19 +138,28 @@ class IncomingLetterController extends Controller
         return view('incoming.edit', compact('incoming'));
     }
 
-    public function update(Request $request, IncomingLetter $incoming): RedirectResponse
+    public function update(Request $request, IncomingLetter $incoming): RedirectResponse|JsonResponse
     {
         abort_unless(in_array($incoming->status, ['menunggu_disposisi', 'perlu_perbaikan'], true), 403);
-        $data = $request->validate(['letter_number' => ['required', 'string', 'max:120'], 'letter_date' => ['required', 'date'], 'received_at' => ['required', 'date'], 'sender' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190'], 'classification' => ['required', 'in:biasa,segera,sangat_segera,rahasia'], 'file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'], 'notes' => ['nullable', 'string', 'max:2000']]);
+        $data = $request->validate(['letter_number' => ['required', 'string', 'max:120'], 'letter_date' => ['required', 'date'], 'received_at' => ['required', 'date'], 'sender' => ['required', 'string', 'max:190'], 'subject' => ['required', 'string', 'max:190'], 'classification' => ['required', 'in:biasa,segera,sangat_segera,rahasia'], 'file' => ['nullable', 'file', 'max:10240', function ($attribute, $file, $fail): void {
+            if (! UploadedDocument::extension($file)) {
+                $fail('File harus berupa PDF, JPG, JPEG, atau PNG yang valid.');
+            }
+        }], 'notes' => ['nullable', 'string', 'max:2000']]);
         if ($request->hasFile('file')) {
             $oldFile = $incoming->file_path;
-            $data['file_path'] = $request->file('file')->store('letters/incoming', 'local');
+            $uploadedFile = $request->file('file');
+            $data['file_path'] = UploadedDocument::store($uploadedFile, 'letters/incoming');
 
         } unset($data['file']);
         $incoming->update($data);
 
         if (isset($oldFile)) {
             Storage::disk('local')->delete($oldFile);
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Data surat diperbarui.']);
         }
 
         return redirect()->route('incoming.show', $incoming)->with('success', 'Data surat diperbarui.');
@@ -175,4 +206,5 @@ class IncomingLetterController extends Controller
 
         return $number;
     }
+
 }
